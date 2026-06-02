@@ -9,7 +9,8 @@ export const usuario = {
   estado: "Mato Grosso",
   areaTotal: 590,
   culturas: ["Soja", "Milho"],
-  plano: "Produtor",
+  cooperativa: "Cooperativa Centro-Oeste",
+  plano: "Cooperativa",
   valorPlano: "R$ 299/mês",
 }
 

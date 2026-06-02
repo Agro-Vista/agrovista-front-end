@@ -39,6 +39,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="cadastro/conta" />
         <Stack.Screen name="cadastro/propriedade" />
+        <Stack.Screen name="perfil" />
       </Stack>
       <StatusBar style="light" />
     </SessionProvider>
