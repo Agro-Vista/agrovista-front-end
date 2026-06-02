@@ -14,5 +14,6 @@ export type User = {
   municipio?: string
   areaHectares?: number
   cultura?: string
+  cooperativa?: string
   plano?: PlanId
 }

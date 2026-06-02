@@ -21,40 +21,35 @@ import { useSession } from "@/context/SessionContext"
 import { userService } from "@/services/userService"
 import { maskPhone, stripMask } from "@/lib/masks"
 import { usuario } from "@/data/mockData"
+import { EDIT_FORM_INITIAL, PREFS_INITIAL, SENHA_FORM_INITIAL } from "@/data/profile"
+import type { AntecedenciaOpcao } from "@/data/profile"
 import type { User } from "@/types/user"
-
-type AntecedenciaOpcao = "24h" | "48h" | "72h"
 
 export default function PerfilScreen() {
   const { session, setSession, clearSession } = useSession()
   const insets = useSafeAreaInsets()
 
-  const [user, setUser] = useState<User | null>(null)
+  const [user,    setUser]    = useState<User | null>(null)
   const [editando, setEditando] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [erroEdit, setErroEdit] = useState<string | null>(null)
 
-  // campos pessoais
-  const [nomeEdit,     setNomeEdit]     = useState("")
-  const [emailEdit,    setEmailEdit]    = useState("")
-  const [telefoneEdit, setTelefoneEdit] = useState("")
+  const [editForm,  setEditForm]  = useState(EDIT_FORM_INITIAL)
+  const [prefs,     setPrefs]     = useState(PREFS_INITIAL)
+  const [senhaForm, setSenhaForm] = useState(SENHA_FORM_INITIAL)
 
-  // campos da propriedade
-  const [fazendaEdit,    setFazendaEdit]    = useState("")
-  const [municipioEdit,  setMunicipioEdit]  = useState("")
-  const [estadoEdit,     setEstadoEdit]     = useState("")
-  const [areaEdit,       setAreaEdit]       = useState("")
-  const [culturaEdit,    setCulturaEdit]    = useState("Soja")  
-  
-  // preferências
-  const [alertaWhatsApp, setAlertaWhatsApp] = useState(true)
-  const [alertaPush,     setAlertaPush]     = useState(true)
-  const [relatorioEmail, setRelatorioEmail] = useState(false)
-  const [antecedencia,   setAntecedencia]   = useState<AntecedenciaOpcao>("72h")
-
-  // logout
   const [confirmandoSaida, setConfirmandoSaida] = useState(false)
-  const [saindo, setSaindo] = useState(false)
+  const [saindo,           setSaindo]           = useState(false)
+
+  function setEdit<K extends keyof typeof EDIT_FORM_INITIAL>(k: K, v: typeof EDIT_FORM_INITIAL[K]) {
+    setEditForm(p => ({ ...p, [k]: v }))
+  }
+  function setPref<K extends keyof typeof PREFS_INITIAL>(k: K, v: typeof PREFS_INITIAL[K]) {
+    setPrefs(p => ({ ...p, [k]: v }))
+  }
+  function setSenha<K extends keyof typeof SENHA_FORM_INITIAL>(k: K, v: typeof SENHA_FORM_INITIAL[K]) {
+    setSenhaForm(p => ({ ...p, [k]: v }))
+  }
 
   useEffect(() => {
     if (!session.usuarioId) return
@@ -66,14 +61,17 @@ export default function PerfilScreen() {
   }, [session.usuarioId])
 
   function populaEdicao(u: User) {
-    setNomeEdit(u.nome)
-    setEmailEdit(u.email)
-    setTelefoneEdit(maskPhone(u.telefone))
-    setFazendaEdit(u.nomeFazenda ?? "")
-    setMunicipioEdit(u.municipio ?? "")
-    setEstadoEdit(u.estado ?? "")
-    setAreaEdit(u.areaHectares ? String(u.areaHectares) : "")
-    setCulturaEdit(u.cultura ?? "Soja")
+    setEditForm({
+      nome:        u.nome,
+      email:       u.email,
+      telefone:    maskPhone(u.telefone),
+      fazenda:     u.nomeFazenda ?? "",
+      municipio:   u.municipio ?? "",
+      estado:      u.estado ?? "",
+      area:        u.areaHectares ? String(u.areaHectares) : "",
+      cultura:     u.cultura ?? "Soja",
+      cooperativa: u.cooperativa ?? "",
+    })
   }
 
   function iniciarEdicao() {
@@ -84,19 +82,20 @@ export default function PerfilScreen() {
 
   async function salvar() {
     if (!session.usuarioId) return
-    if (!nomeEdit.trim()) { setErroEdit("Nome é obrigatório."); return }
+    if (!editForm.nome.trim()) { setErroEdit("Nome é obrigatório."); return }
     setSalvando(true)
     setErroEdit(null)
     try {
       const atualizado = await userService.atualizar(session.usuarioId, {
-        nome:        nomeEdit.trim(),
-        email:       emailEdit.trim(),
-        telefone:    stripMask(telefoneEdit),
-        nomeFazenda: fazendaEdit.trim() || undefined,
-        municipio:   municipioEdit.trim() || undefined,
-        estado:      estadoEdit.trim() || undefined,
-        areaHectares: areaEdit ? Number(areaEdit.replace(/\D/g, "")) || undefined : undefined,
-        cultura:     culturaEdit || undefined,
+        nome:         editForm.nome.trim(),
+        email:        editForm.email.trim(),
+        telefone:     stripMask(editForm.telefone),
+        nomeFazenda:  editForm.fazenda.trim() || undefined,
+        municipio:    editForm.municipio.trim() || undefined,
+        estado:       editForm.estado.trim() || undefined,
+        areaHectares: editForm.area ? Number(editForm.area.replace(/\D/g, "")) || undefined : undefined,
+        cultura:      editForm.cultura || undefined,
+        cooperativa:  editForm.cooperativa.trim() || undefined,
       })
       setUser(atualizado)
       await setSession({ ...session, nome: atualizado.nome })
@@ -105,6 +104,28 @@ export default function PerfilScreen() {
       setErroEdit(err instanceof Error ? err.message : "Erro ao salvar.")
     } finally {
       setSalvando(false)
+    }
+  }
+
+  async function alterarSenha() {
+    if (!session.usuarioId || !user) return
+    const { atual, nova, confirma } = senhaForm
+    if (!atual)             { setSenha("erro", "Informe a senha atual."); return }
+    if (atual !== user.senha) { setSenha("erro", "Senha atual incorreta."); return }
+    if (!nova)              { setSenha("erro", "Informe a nova senha."); return }
+    if (nova.length < 6)    { setSenha("erro", "A nova senha deve ter ao menos 6 caracteres."); return }
+    if (nova !== confirma)  { setSenha("erro", "As senhas não coincidem."); return }
+    setSenha("salvando", true)
+    setSenha("erro", null)
+    try {
+      const atualizado = await userService.atualizar(session.usuarioId, { senha: nova })
+      setUser(atualizado)
+      setSenha("sucesso", true)
+      setTimeout(() => setSenhaForm(SENHA_FORM_INITIAL), 1500)
+    } catch (err) {
+      setSenha("erro", err instanceof Error ? err.message : "Erro ao salvar.")
+    } finally {
+      setSenha("salvando", false)
     }
   }
 
@@ -205,8 +226,8 @@ export default function PerfilScreen() {
               className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
               placeholderTextColor={colors.textoTerciario}
               placeholder="João Batista Ferreira"
-              value={nomeEdit}
-              onChangeText={setNomeEdit}
+              value={editForm.nome}
+              onChangeText={(v) => setEdit("nome", v)}
               autoCapitalize="words"
             />
 
@@ -215,8 +236,8 @@ export default function PerfilScreen() {
               className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
               placeholderTextColor={colors.textoTerciario}
               placeholder="joao@fazenda.com.br"
-              value={emailEdit}
-              onChangeText={setEmailEdit}
+              value={editForm.email}
+              onChangeText={(v) => setEdit("email", v)}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -226,8 +247,8 @@ export default function PerfilScreen() {
               className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-1"
               placeholderTextColor={colors.textoTerciario}
               placeholder="(66) 99999-0000"
-              value={telefoneEdit}
-              onChangeText={(v) => setTelefoneEdit(maskPhone(v))}
+              value={editForm.telefone}
+              onChangeText={(v) => setEdit("telefone", maskPhone(v))}
               keyboardType="phone-pad"
             />
 
@@ -238,8 +259,8 @@ export default function PerfilScreen() {
               className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
               placeholderTextColor={colors.textoTerciario}
               placeholder="Fazenda Santa Fé"
-              value={fazendaEdit}
-              onChangeText={setFazendaEdit}
+              value={editForm.fazenda}
+              onChangeText={(v) => setEdit("fazenda", v)}
               autoCapitalize="words"
             />
 
@@ -250,8 +271,8 @@ export default function PerfilScreen() {
                   className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil"
                   placeholderTextColor={colors.textoTerciario}
                   placeholder="Sorriso"
-                  value={municipioEdit}
-                  onChangeText={setMunicipioEdit}
+                  value={editForm.municipio}
+                  onChangeText={(v) => setEdit("municipio", v)}
                   autoCapitalize="words"
                 />
               </View>
@@ -261,8 +282,8 @@ export default function PerfilScreen() {
                   className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil"
                   placeholderTextColor={colors.textoTerciario}
                   placeholder="Mato Grosso"
-                  value={estadoEdit}
-                  onChangeText={setEstadoEdit}
+                  value={editForm.estado}
+                  onChangeText={(v) => setEdit("estado", v)}
                   autoCapitalize="words"
                 />
               </View>
@@ -273,13 +294,27 @@ export default function PerfilScreen() {
               className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-1"
               placeholderTextColor={colors.textoTerciario}
               placeholder="590"
-              value={areaEdit}
-              onChangeText={setAreaEdit}
+              value={editForm.area}
+              onChangeText={(v) => setEdit("area", v)}
               keyboardType="numeric"
             />
 
+            {user?.plano === "cooperativa" && (
+              <>
+                <FieldLabel>COOPERATIVA</FieldLabel>
+                <TextInput
+                  className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
+                  placeholderTextColor={colors.textoTerciario}
+                  placeholder="Cooperativa Centro-Oeste"
+                  value={editForm.cooperativa}
+                  onChangeText={(v) => setEdit("cooperativa", v)}
+                  autoCapitalize="words"
+                />
+              </>
+            )}
+
             <SectionTitle>CULTURA PRINCIPAL</SectionTitle>
-            <CropChipSelector value={culturaEdit} onChange={setCulturaEdit} />
+            <CropChipSelector value={editForm.cultura} onChange={(v) => setEdit("cultura", v)} />
 
             {erroEdit && (
               <View className="mt-4 p-3 bg-[#2d0f0f] border border-[#ef4444] rounded-xl">
@@ -315,14 +350,14 @@ export default function PerfilScreen() {
                 { icon: "resize-outline",    label: "Área total",        value: `${area} hectares` },
                 { icon: "leaf-outline",      label: "Cultura principal", value: cultura },
                 { icon: "location-outline",  label: "Localização",       value: `${estado} · ${municipio}` },
-                { icon: "flag-outline",      label: "Cooperativa",       value: usuario.cooperativa },
-              ] as { icon: keyof typeof Ionicons.glyphMap; label: string; value: string }[]).map((row, idx, arr) => (
+                { icon: "flag-outline", label: "Cooperativa", value: user?.plano === "cooperativa" ? (user.cooperativa || `${fazenda} Cooperativa`) : "Sem plano cooperativa", muted: user?.plano !== "cooperativa" },
+              ] as { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; muted?: boolean }[]).map((row, idx, arr) => (
                 <View key={row.label}>
                   <View className="px-4 py-[14px] flex-row items-center">
                     <Ionicons name={row.icon} size={18} color={colors.textoTerciario} />
                     <Text className="text-[13px] text-textoTerciario ml-3 w-[120px]">{row.label}</Text>
-                    <Text className="flex-1 text-[13px] font-medium text-textoPrimario text-right" numberOfLines={1}>
-                      {row.value}
+                    <Text className="flex-1 text-[13px] font-medium text-right" style={{ color: row.muted ? colors.textoTerciario : colors.textoPrimario }} numberOfLines={1}>
+                      {row.muted ? `× ${row.value}` : row.value}
                     </Text>
                   </View>
                   {idx < arr.length - 1 && <View className="h-[1px] mx-4 bg-bordaSutil" />}
@@ -336,9 +371,9 @@ export default function PerfilScreen() {
             </Text>
             <View className="bg-card rounded-2xl border border-bordaSutil mb-3 overflow-hidden">
               {([
-                { label: "Alertas via WhatsApp", sub: "Mensagens em tempo real",   value: alertaWhatsApp, onChange: setAlertaWhatsApp },
-                { label: "Alertas via push",     sub: "Notificações no celular",   value: alertaPush,     onChange: setAlertaPush     },
-                { label: "Relatório semanal",    sub: "Resumo toda segunda-feira", value: relatorioEmail, onChange: setRelatorioEmail },
+                { label: "Alertas via WhatsApp", sub: "Mensagens em tempo real",   key: "alertaWhatsApp" as const },
+                { label: "Alertas via push",     sub: "Notificações no celular",   key: "alertaPush"     as const },
+                { label: "Relatório semanal",    sub: "Resumo toda segunda-feira", key: "relatorioEmail" as const },
               ]).map((item, idx, arr) => (
                 <View key={item.label}>
                   <View className="px-4 py-[14px] flex-row items-center justify-between">
@@ -347,8 +382,8 @@ export default function PerfilScreen() {
                       <Text className="text-[12px] text-textoTerciario mt-[2px]">{item.sub}</Text>
                     </View>
                     <Switch
-                      value={item.value}
-                      onValueChange={item.onChange}
+                      value={prefs[item.key]}
+                      onValueChange={(v) => setPref(item.key, v)}
                       trackColor={{ false: colors.bordaVisivel, true: colors.verde }}
                       thumbColor={colors.textoPrimario}
                     />
@@ -368,11 +403,11 @@ export default function PerfilScreen() {
               </Text>
               <View className="flex-row gap-2">
                 {(["24h", "48h", "72h"] as AntecedenciaOpcao[]).map((op) => {
-                  const ativa = antecedencia === op
+                  const ativa = prefs.antecedencia === op
                   return (
                     <TouchableOpacity
                       key={op}
-                      onPress={() => setAntecedencia(op)}
+                      onPress={() => setPref("antecedencia", op)}
                       className={`flex-1 py-[10px] rounded-xl items-center border ${
                         ativa ? "bg-verde border-verde" : "bg-cardElevado border-bordaVisivel"
                       }`}
@@ -423,13 +458,87 @@ export default function PerfilScreen() {
               CONTA
             </Text>
             <View className="bg-card rounded-2xl border border-bordaSutil mb-6 overflow-hidden">
-              <TouchableOpacity activeOpacity={0.75} className="px-4 py-[14px] flex-row items-center gap-3">
-                <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: colors.cardElevado }}>
-                  <Ionicons name="key-outline" size={16} color={colors.textoSecundario} />
+              {!senhaForm.aberto ? (
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() => setSenha("aberto", true)}
+                  className="px-4 py-[14px] flex-row items-center gap-3"
+                >
+                  <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: colors.cardElevado }}>
+                    <Ionicons name="key-outline" size={16} color={colors.textoSecundario} />
+                  </View>
+                  <Text className="flex-1 text-[14px] font-medium text-textoPrimario">Alterar senha</Text>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textoTerciario} />
+                </TouchableOpacity>
+              ) : (
+                <View className="px-4 py-4">
+                  {senhaForm.sucesso ? (
+                    <View className="flex-row items-center gap-2 py-2">
+                      <Ionicons name="checkmark-circle" size={20} color={colors.verde} />
+                      <Text className="text-[14px] font-semibold text-verde">Senha alterada com sucesso!</Text>
+                    </View>
+                  ) : (
+                    <>
+                      <Text className="text-[13px] font-semibold text-textoPrimario mb-3">Alterar senha</Text>
+
+                      <TextInput
+                        className="bg-cardElevado text-textoPrimario rounded-xl px-4 py-[13px] text-[14px] border border-bordaSutil mb-2"
+                        placeholderTextColor={colors.textoTerciario}
+                        placeholder="Senha atual"
+                        value={senhaForm.atual}
+                        onChangeText={(v) => setSenha("atual", v)}
+                        secureTextEntry
+                        autoCapitalize="none"
+                      />
+                      <TextInput
+                        className="bg-cardElevado text-textoPrimario rounded-xl px-4 py-[13px] text-[14px] border border-bordaSutil mb-2"
+                        placeholderTextColor={colors.textoTerciario}
+                        placeholder="Nova senha (mín. 6 caracteres)"
+                        value={senhaForm.nova}
+                        onChangeText={(v) => setSenha("nova", v)}
+                        secureTextEntry
+                        autoCapitalize="none"
+                      />
+                      <TextInput
+                        className="bg-cardElevado text-textoPrimario rounded-xl px-4 py-[13px] text-[14px] border border-bordaSutil mb-3"
+                        placeholderTextColor={colors.textoTerciario}
+                        placeholder="Confirmar nova senha"
+                        value={senhaForm.confirma}
+                        onChangeText={(v) => setSenha("confirma", v)}
+                        secureTextEntry
+                        autoCapitalize="none"
+                      />
+
+                      {senhaForm.erro && (
+                        <View className="p-3 rounded-xl mb-3" style={{ backgroundColor: colors.vermelhoBackground }}>
+                          <Text className="text-[12px] text-vermelho">{senhaForm.erro}</Text>
+                        </View>
+                      )}
+
+                      <View className="flex-row gap-3">
+                        <TouchableOpacity
+                          onPress={() => setSenhaForm(SENHA_FORM_INITIAL)}
+                          disabled={senhaForm.salvando}
+                          className="flex-1 py-[11px] rounded-xl items-center border border-bordaSutil bg-card"
+                        >
+                          <Text className="text-[14px] font-semibold text-textoPrimario">Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => void alterarSenha()}
+                          disabled={senhaForm.salvando}
+                          className="flex-1 py-[11px] rounded-xl items-center"
+                          style={{ backgroundColor: colors.verde }}
+                        >
+                          {senhaForm.salvando
+                            ? <ActivityIndicator size={16} color={colors.bg} />
+                            : <Text className="text-[14px] font-bold" style={{ color: colors.bg }}>Salvar</Text>
+                          }
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
                 </View>
-                <Text className="flex-1 text-[14px] font-medium text-textoPrimario">Alterar senha</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.textoTerciario} />
-              </TouchableOpacity>
+              )}
 
               <View className="h-[1px] mx-4 bg-bordaSutil" />
 
