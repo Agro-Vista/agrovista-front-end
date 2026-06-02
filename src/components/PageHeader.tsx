@@ -1,5 +1,6 @@
 import { Image, Text, TouchableOpacity, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { router } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { colors } from "@/constants/Colors"
 
@@ -36,12 +37,13 @@ export function PageHeader({ alertasAtivos, nome }: Props) {
               {alertasAtivos} alertas ativos
             </Text>
           </TouchableOpacity>
-          <View
+          <TouchableOpacity
+            onPress={() => router.push("/perfil")}
             className="w-[34px] h-[34px] rounded-full border-[1.5px] border-verde items-center justify-center"
             style={{ backgroundColor: colors.verde + "20" }}
           >
             <Text className="text-[12px] font-bold text-verde">{iniciais}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

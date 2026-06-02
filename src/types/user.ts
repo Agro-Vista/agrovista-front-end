@@ -4,4 +4,10 @@ export type User = {
   email: string
   senha: string
   telefone: string
+  cpfCnpj?: string
+  nomeFazenda?: string
+  estado?: string
+  municipio?: string
+  areaHectares?: number
+  cultura?: string
 }

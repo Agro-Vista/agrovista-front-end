@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native"
-import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
 import { dashboard, usuario } from "@/data/mockData"
@@ -20,7 +19,6 @@ import { useSession } from "@/context/SessionContext"
 
 export default function HomeScreen() {
   const { session } = useSession()
-  const router = useRouter()
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Mapa")
   const [avisosAPI, setAvisosAPI] = useState<AlertaItemData[]>([])
   const [loadingAvisos, setLoadingAvisos] = useState(false)
@@ -45,65 +43,41 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 bg-bg">
 
-      {/* ─── Topo fixo (header + tabs) — nunca se move ─── */}
-      <View style={{ paddingTop: insets.top }}>
-
-      {/* Header */}
-      <View className="px-4 pb-3 pt-2 flex-row items-center justify-between">
-        <Image
-          style={{ width: 220, height: 65, marginBottom: 12 }}
-          source={require("../../../assets/images/light-logo.png")}
-          resizeMode="contain"
+      {/* Topo fixo (header + tabs) */}
+      <View>
+        <PageHeader
+          alertasAtivos={dashboard.alertasAtivos}
+          nome={session.nome || usuario.nome}
         />
-        <View className="flex-row items-center gap-[10px]">
-          {/* borderColor com alpha não tem classe NativeWind → style */}
-          <TouchableOpacity
-            className="flex-row items-center gap-[5px] bg-ambarBackground rounded-full px-[10px] py-[5px] border"
-            style={{ borderColor: colors.ambar + "40" }}
-          >
-            <Ionicons name="notifications-outline" size={13} color={colors.ambar} />
-            <Text className="text-[12px] text-ambar font-semibold">
-              {dashboard.alertasAtivos} alertas ativos
-            </Text>
-          </TouchableOpacity>
 
-          {/* backgroundColor com alpha → style */}
-          <View
-            className="w-[34px] h-[34px] rounded-full border-[1.5px] border-verde items-center justify-center"
-            style={{ backgroundColor: colors.verde + "20" }}
-          >
-            <Text className="text-[12px] font-bold text-verde">{iniciais}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ─── Sub-abas ─── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 10, alignItems: "center" }}
-      >
-        {ABAS.map((aba) => {
-          const ativa = abaAtiva === aba
-          return (
-            <TouchableOpacity
-              key={aba}
-              onPress={() => setAbaAtiva(aba)}
-              className={`px-[18px] py-[7px] rounded-full border ${
-                ativa ? "bg-verde border-verde" : "bg-card border-bordaVisivel"
-              }`}
-            >
-              <Text
-                className={`text-[13px] font-medium ${
-                  ativa ? "text-[#111111]" : "text-textoSecundario"
+        {/* Sub-abas */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 10, alignItems: "center" }}
+        >
+          {ABAS.map((aba) => {
+            const ativa = abaAtiva === aba
+            return (
+              <TouchableOpacity
+                key={aba}
+                onPress={() => setAbaAtiva(aba)}
+                className={`px-[18px] py-[7px] rounded-full border ${
+                  ativa ? "bg-verde border-verde" : "bg-card border-bordaVisivel"
                 }`}
               >
-                {aba}
-              </Text>
-            </TouchableOpacity>
-          )
-        })}
-      </ScrollView>
+                <Text
+                  className={`text-[13px] font-medium ${
+                    ativa ? "text-[#111111]" : "text-textoSecundario"
+                  }`}
+                >
+                  {aba}
+                </Text>
+              </TouchableOpacity>
+            )
+          })}
+        </ScrollView>
+      </View>
 
       {/* Conteúdo */}
       <ScrollView

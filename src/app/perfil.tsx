@@ -1,389 +1,499 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
+  TextInput,
+  ActivityIndicator,
 } from "react-native"
-import { useRouter } from "expo-router"
+import { router } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
+
 import { colors } from "@/constants/Colors"
+import { FieldLabel } from "@/components/FieldLabel"
+import { SectionTitle } from "@/components/SectionTitle"
+import { CulturaChipSelector } from "@/components/CulturaChipSelector"
 import { useSession } from "@/context/SessionContext"
+import { usuarioService } from "@/services/usuarioService"
+import { maskPhone, stripMask } from "@/lib/masks"
 import { usuario } from "@/data/mockData"
+import type { User } from "@/types/user"
 
 type AntecedenciaOpcao = "24h" | "48h" | "72h"
 
-const PROPRIEDADE_ROWS: {
-  icon: keyof typeof Ionicons.glyphMap
-  label: string
-  value: string
-}[] = [
-  { icon: "business-outline", label: "Fazenda", value: usuario.fazenda },
-  {
-    icon: "resize-outline",
-    label: "Área total",
-    value: `${usuario.areaTotal} hectares`,
-  },
-  {
-    icon: "leaf-outline",
-    label: "Cultura principal",
-    value: usuario.culturas.join(" + "),
-  },
-  {
-    icon: "location-outline",
-    label: "Localização",
-    value: `${usuario.estado} · ${usuario.municipio}`,
-  },
-  {
-    icon: "flag-outline",
-    label: "Cooperativa",
-    value: usuario.cooperativa,
-  },
-]
-
 export default function PerfilScreen() {
-  const { session, clearSession } = useSession()
-  const router = useRouter()
+  const { session, setSession, clearSession } = useSession()
   const insets = useSafeAreaInsets()
 
-  const nomeSessao = session.nome || usuario.nome
-  const iniciais = nomeSessao
-    .split(" ")
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
+  const [user, setUser] = useState<User | null>(null)
+  const [editando, setEditando] = useState(false)
+  const [salvando, setSalvando] = useState(false)
+  const [erroEdit, setErroEdit] = useState<string | null>(null)
 
+  // campos pessoais
+  const [nomeEdit,     setNomeEdit]     = useState("")
+  const [emailEdit,    setEmailEdit]    = useState("")
+  const [telefoneEdit, setTelefoneEdit] = useState("")
+
+  // campos da propriedade
+  const [fazendaEdit,    setFazendaEdit]    = useState("")
+  const [municipioEdit,  setMunicipioEdit]  = useState("")
+  const [estadoEdit,     setEstadoEdit]     = useState("")
+  const [areaEdit,       setAreaEdit]       = useState("")
+  const [culturaEdit,    setCulturaEdit]    = useState("Soja")  
+  
+  // preferências
   const [alertaWhatsApp, setAlertaWhatsApp] = useState(true)
-  const [alertaPush, setAlertaPush] = useState(true)
+  const [alertaPush,     setAlertaPush]     = useState(true)
   const [relatorioEmail, setRelatorioEmail] = useState(false)
-  const [antecedencia, setAntecedencia] = useState<AntecedenciaOpcao>("72h")
+  const [antecedencia,   setAntecedencia]   = useState<AntecedenciaOpcao>("72h")
 
-  const handleSair = () => {
-    Alert.alert("Sair da conta", "Tem certeza que deseja sair?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Sair",
-        style: "destructive",
-        onPress: async () => {
-          await clearSession()
-          router.replace("/login")
-        },
-      },
-    ])
+  // logout
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false)
+  const [saindo, setSaindo] = useState(false)
+
+  useEffect(() => {
+    if (!session.usuarioId) return
+    void usuarioService.buscar(session.usuarioId).then((u) => {
+      if (!u) return
+      setUser(u)
+      populaEdicao(u)
+    })
+  }, [session.usuarioId])
+
+  function populaEdicao(u: User) {
+    setNomeEdit(u.nome)
+    setEmailEdit(u.email)
+    setTelefoneEdit(maskPhone(u.telefone))
+    setFazendaEdit(u.nomeFazenda ?? "")
+    setMunicipioEdit(u.municipio ?? "")
+    setEstadoEdit(u.estado ?? "")
+    setAreaEdit(u.areaHectares ? String(u.areaHectares) : "")
+    setCulturaEdit(u.cultura ?? "Soja")
   }
+
+  function iniciarEdicao() {
+    if (user) populaEdicao(user)
+    setErroEdit(null)
+    setEditando(true)
+  }
+
+  async function salvar() {
+    if (!session.usuarioId) return
+    if (!nomeEdit.trim()) { setErroEdit("Nome é obrigatório."); return }
+    setSalvando(true)
+    setErroEdit(null)
+    try {
+      const atualizado = await usuarioService.atualizar(session.usuarioId, {
+        nome:        nomeEdit.trim(),
+        email:       emailEdit.trim(),
+        telefone:    stripMask(telefoneEdit),
+        nomeFazenda: fazendaEdit.trim() || undefined,
+        municipio:   municipioEdit.trim() || undefined,
+        estado:      estadoEdit.trim() || undefined,
+        areaHectares: areaEdit ? Number(areaEdit.replace(/\D/g, "")) || undefined : undefined,
+        cultura:     culturaEdit || undefined,
+      })
+      setUser(atualizado)
+      await setSession({ ...session, nome: atualizado.nome })
+      setEditando(false)
+    } catch (err) {
+      setErroEdit(err instanceof Error ? err.message : "Erro ao salvar.")
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function executarSaida() {
+    setSaindo(true)
+    await clearSession()
+    router.replace("/login")
+  }
+
+  const nomeSessao = user?.nome || session.nome || usuario.nome
+  const iniciais = nomeSessao
+    .split(" ").slice(0, 2)
+    .map((p) => p[0]).join("").toUpperCase()
+
+  const fazenda   = user?.nomeFazenda ?? usuario.fazenda
+  const municipio = user?.municipio   ?? usuario.municipio
+  const estado    = user?.estado      ?? usuario.estado
+  const area      = user?.areaHectares ?? usuario.areaTotal
+  const cultura   = user?.cultura     ?? usuario.culturas[0]
 
   return (
     <View className="flex-1 bg-bg">
       {/* Header */}
       <View style={{ paddingTop: insets.top }}>
-        <View className="px-4 pt-2 pb-3 flex-row items-center">
+        <View className="flex-row items-center justify-between px-5 py-4 border-b border-bordaSutil">
           <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-9 h-9 items-center justify-center"
+            className="flex-row items-center gap-1"
+            onPress={() => editando ? setEditando(false) : router.back()}
           >
-            <Ionicons name="chevron-back" size={24} color={colors.textoPrimario} />
+            <Ionicons name="arrow-back" size={18} color={colors.roxo} />
+            <Text className="text-roxo text-[16px]">{editando ? "Cancelar" : "Voltar"}</Text>
           </TouchableOpacity>
-          <Text className="flex-1 text-center text-[17px] font-semibold text-textoPrimario">
-            Perfil
-          </Text>
-          <TouchableOpacity className="w-9 h-9 items-center justify-center">
-            <Ionicons name="create-outline" size={22} color={colors.roxo} />
-          </TouchableOpacity>
+
+          <Text className="text-textoPrimario text-[16px] font-bold">Perfil</Text>
+
+          {editando ? (
+            <TouchableOpacity onPress={salvar} disabled={salvando}>
+              {salvando
+                ? <ActivityIndicator size={16} color={colors.verde} />
+                : <Text className="text-verde text-[16px] font-semibold">Salvar</Text>
+              }
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={iniciarEdicao}>
+              <Ionicons name="create-outline" size={22} color={colors.roxo} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
       >
-        {/* Avatar + info */}
-        <View className="items-center pt-4 pb-6">
+        {/* Avatar */}
+        <View className="items-center pt-5 pb-4">
           <View
-            className="w-[80px] h-[80px] rounded-full border-[2px] border-verde items-center justify-center mb-3"
+            className="w-[72px] h-[72px] rounded-full border-[2px] border-verde items-center justify-center"
             style={{ backgroundColor: colors.verde + "20" }}
           >
-            <Text className="text-[28px] font-bold text-verde">{iniciais}</Text>
+            <Text className="text-[26px] font-bold text-verde">{iniciais}</Text>
           </View>
-          <Text className="text-[20px] font-bold text-textoPrimario">
-            {nomeSessao}
-          </Text>
-          <Text className="text-[13px] text-textoSecundario mt-[3px]">
-            {usuario.municipio} · {usuario.estado}
-          </Text>
-          <View
-            className="flex-row items-center gap-[6px] mt-3 px-4 py-[6px] rounded-full"
-            style={{ backgroundColor: colors.roxo + "20" }}
-          >
-            <View className="w-[6px] h-[6px] rounded-full bg-roxo" />
-            <Text className="text-[13px] font-medium text-roxo">
-              Plano {usuario.plano} · Ativo
-            </Text>
-          </View>
-        </View>
-
-        {/* MINHA PROPRIEDADE */}
-        <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
-          MINHA PROPRIEDADE
-        </Text>
-        <View className="bg-card rounded-2xl border border-bordaSutil mb-5 overflow-hidden">
-          {PROPRIEDADE_ROWS.map((row, idx) => (
-            <View key={row.label}>
-              <View className="px-4 py-[14px] flex-row items-center">
-                <Ionicons
-                  name={row.icon}
-                  size={18}
-                  color={colors.textoTerciario}
-                />
-                <Text className="text-[13px] text-textoTerciario ml-3 w-[120px]">
-                  {row.label}
-                </Text>
-                <Text className="flex-1 text-[13px] font-medium text-textoPrimario text-right">
-                  {row.value}
+          {!editando && (
+            <>
+              <Text className="text-[20px] font-bold text-textoPrimario mt-3">{nomeSessao}</Text>
+              {user?.email ? (
+                <Text className="text-[13px] text-textoSecundario mt-[3px]">{user.email}</Text>
+              ) : null}
+              {user?.telefone ? (
+                <Text className="text-[12px] text-textoTerciario mt-[2px]">{maskPhone(user.telefone)}</Text>
+              ) : null}
+              <Text className="text-[12px] text-textoTerciario mt-[2px]">
+                {municipio} · {estado}
+              </Text>
+              <View
+                className="flex-row items-center gap-[6px] mt-3 px-4 py-[6px] rounded-full"
+                style={{ backgroundColor: colors.roxo + "20" }}
+              >
+                <View className="w-[6px] h-[6px] rounded-full bg-roxo" />
+                <Text className="text-[13px] font-medium text-roxo">
+                  Plano {usuario.plano} · Ativo
                 </Text>
               </View>
-              {idx < PROPRIEDADE_ROWS.length - 1 && (
-                <View className="h-[1px] mx-4 bg-bordaSutil" />
+            </>
+          )}
+        </View>
+
+        {/* ── MODO EDIÇÃO ── */}
+        {editando && (
+          <>
+            <SectionTitle>DADOS PESSOAIS</SectionTitle>
+
+            <FieldLabel>NOME COMPLETO</FieldLabel>
+            <TextInput
+              className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
+              placeholderTextColor={colors.textoTerciario}
+              placeholder="João Batista Ferreira"
+              value={nomeEdit}
+              onChangeText={setNomeEdit}
+              autoCapitalize="words"
+            />
+
+            <FieldLabel>E-MAIL</FieldLabel>
+            <TextInput
+              className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
+              placeholderTextColor={colors.textoTerciario}
+              placeholder="joao@fazenda.com.br"
+              value={emailEdit}
+              onChangeText={setEmailEdit}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <FieldLabel>TELEFONE (WHATSAPP)</FieldLabel>
+            <TextInput
+              className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-1"
+              placeholderTextColor={colors.textoTerciario}
+              placeholder="(66) 99999-0000"
+              value={telefoneEdit}
+              onChangeText={(v) => setTelefoneEdit(maskPhone(v))}
+              keyboardType="phone-pad"
+            />
+
+            <SectionTitle>MINHA PROPRIEDADE</SectionTitle>
+
+            <FieldLabel>NOME DA FAZENDA</FieldLabel>
+            <TextInput
+              className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-4"
+              placeholderTextColor={colors.textoTerciario}
+              placeholder="Fazenda Santa Fé"
+              value={fazendaEdit}
+              onChangeText={setFazendaEdit}
+              autoCapitalize="words"
+            />
+
+            <View className="flex-row gap-3 mb-4">
+              <View className="flex-1">
+                <FieldLabel>MUNICÍPIO</FieldLabel>
+                <TextInput
+                  className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil"
+                  placeholderTextColor={colors.textoTerciario}
+                  placeholder="Sorriso"
+                  value={municipioEdit}
+                  onChangeText={setMunicipioEdit}
+                  autoCapitalize="words"
+                />
+              </View>
+              <View className="flex-1">
+                <FieldLabel>ESTADO</FieldLabel>
+                <TextInput
+                  className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil"
+                  placeholderTextColor={colors.textoTerciario}
+                  placeholder="Mato Grosso"
+                  value={estadoEdit}
+                  onChangeText={setEstadoEdit}
+                  autoCapitalize="words"
+                />
+              </View>
+            </View>
+
+            <FieldLabel>ÁREA TOTAL (HECTARES)</FieldLabel>
+            <TextInput
+              className="bg-card text-textoPrimario rounded-xl px-4 py-[14px] text-[15px] border border-bordaSutil mb-1"
+              placeholderTextColor={colors.textoTerciario}
+              placeholder="590"
+              value={areaEdit}
+              onChangeText={setAreaEdit}
+              keyboardType="numeric"
+            />
+
+            <SectionTitle>CULTURA PRINCIPAL</SectionTitle>
+            <CulturaChipSelector value={culturaEdit} onChange={setCulturaEdit} />
+
+            {erroEdit && (
+              <View className="mt-4 p-3 bg-[#2d0f0f] border border-[#ef4444] rounded-xl">
+                <Text className="text-[#f87171] text-center text-[13px]">{erroEdit}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={salvar}
+              disabled={salvando}
+              className="rounded-2xl py-[17px] items-center mt-5"
+              style={{ backgroundColor: colors.verde }}
+            >
+              {salvando
+                ? <ActivityIndicator color={colors.bg} size={20} />
+                : <Text className="text-bg text-[16px] font-bold">Salvar alterações</Text>
+              }
+            </TouchableOpacity>
+          </>
+        )}
+
+        {/* ── MODO LEITURA ── */}
+        {!editando && (
+          <>
+            {/* MINHA PROPRIEDADE */}
+            <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
+              MINHA PROPRIEDADE
+            </Text>
+            <View className="bg-card rounded-2xl border border-bordaSutil mb-5 overflow-hidden">
+              {([
+                { icon: "business-outline",  label: "Fazenda",          value: fazenda },
+                { icon: "resize-outline",    label: "Área total",        value: `${area} hectares` },
+                { icon: "leaf-outline",      label: "Cultura principal", value: cultura },
+                { icon: "location-outline",  label: "Localização",       value: `${estado} · ${municipio}` },
+                { icon: "flag-outline",      label: "Cooperativa",       value: usuario.cooperativa },
+              ] as { icon: keyof typeof Ionicons.glyphMap; label: string; value: string }[]).map((row, idx, arr) => (
+                <View key={row.label}>
+                  <View className="px-4 py-[14px] flex-row items-center">
+                    <Ionicons name={row.icon} size={18} color={colors.textoTerciario} />
+                    <Text className="text-[13px] text-textoTerciario ml-3 w-[120px]">{row.label}</Text>
+                    <Text className="flex-1 text-[13px] font-medium text-textoPrimario text-right" numberOfLines={1}>
+                      {row.value}
+                    </Text>
+                  </View>
+                  {idx < arr.length - 1 && <View className="h-[1px] mx-4 bg-bordaSutil" />}
+                </View>
+              ))}
+            </View>
+
+            {/* PREFERÊNCIAS */}
+            <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
+              PREFERÊNCIAS
+            </Text>
+            <View className="bg-card rounded-2xl border border-bordaSutil mb-3 overflow-hidden">
+              {([
+                { label: "Alertas via WhatsApp", sub: "Mensagens em tempo real",   value: alertaWhatsApp, onChange: setAlertaWhatsApp },
+                { label: "Alertas via push",     sub: "Notificações no celular",   value: alertaPush,     onChange: setAlertaPush     },
+                { label: "Relatório semanal",    sub: "Resumo toda segunda-feira", value: relatorioEmail, onChange: setRelatorioEmail },
+              ]).map((item, idx, arr) => (
+                <View key={item.label}>
+                  <View className="px-4 py-[14px] flex-row items-center justify-between">
+                    <View className="flex-1 mr-3">
+                      <Text className="text-[14px] font-medium text-textoPrimario">{item.label}</Text>
+                      <Text className="text-[12px] text-textoTerciario mt-[2px]">{item.sub}</Text>
+                    </View>
+                    <Switch
+                      value={item.value}
+                      onValueChange={item.onChange}
+                      trackColor={{ false: colors.bordaVisivel, true: colors.verde }}
+                      thumbColor={colors.textoPrimario}
+                    />
+                  </View>
+                  {idx < arr.length - 1 && <View className="h-[1px] mx-4 bg-bordaSutil" />}
+                </View>
+              ))}
+            </View>
+
+            {/* Antecedência */}
+            <View className="bg-card rounded-2xl border border-bordaSutil mb-5 px-4 py-[14px]">
+              <Text className="text-[14px] font-medium text-textoPrimario">
+                Antecedência dos alertas
+              </Text>
+              <Text className="text-[12px] text-textoTerciario mt-[2px] mb-3">
+                Quanto antes você quer ser avisado
+              </Text>
+              <View className="flex-row gap-2">
+                {(["24h", "48h", "72h"] as AntecedenciaOpcao[]).map((op) => {
+                  const ativa = antecedencia === op
+                  return (
+                    <TouchableOpacity
+                      key={op}
+                      onPress={() => setAntecedencia(op)}
+                      className={`flex-1 py-[10px] rounded-xl items-center border ${
+                        ativa ? "bg-verde border-verde" : "bg-cardElevado border-bordaVisivel"
+                      }`}
+                    >
+                      <Text className={`text-[14px] font-semibold ${ativa ? "text-[#111111]" : "text-textoSecundario"}`}>
+                        {op}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </View>
+
+            {/* MINHA ASSINATURA */}
+            <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
+              MINHA ASSINATURA
+            </Text>
+            <View
+              className="rounded-2xl border border-roxo mb-5 px-4 py-4"
+              style={{ backgroundColor: colors.roxoBackground }}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-[15px] font-semibold text-textoPrimario">Plano {usuario.plano}</Text>
+                <Ionicons name="card-outline" size={20} color={colors.roxo} />
+              </View>
+              <Text className="text-[28px] font-bold text-roxo">{usuario.valorPlano}</Text>
+              <Text className="text-[12px] text-textoTerciario mt-[3px] mb-4">
+                Próxima cobrança: 15 de junho de 2026
+              </Text>
+              <TouchableOpacity
+                activeOpacity={0.75}
+                className="rounded-xl border border-roxo py-[13px] items-center"
+                style={{ backgroundColor: colors.roxo + "18" }}
+              >
+                <Text className="text-[14px] font-semibold text-roxo">Gerenciar assinatura</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* CONTA */}
+            <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
+              CONTA
+            </Text>
+            <View className="bg-card rounded-2xl border border-bordaSutil mb-6 overflow-hidden">
+              <TouchableOpacity activeOpacity={0.75} className="px-4 py-[14px] flex-row items-center gap-3">
+                <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: colors.cardElevado }}>
+                  <Ionicons name="key-outline" size={16} color={colors.textoSecundario} />
+                </View>
+                <Text className="flex-1 text-[14px] font-medium text-textoPrimario">Alterar senha</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textoTerciario} />
+              </TouchableOpacity>
+
+              <View className="h-[1px] mx-4 bg-bordaSutil" />
+
+              <TouchableOpacity activeOpacity={0.75} className="px-4 py-[14px] flex-row items-center gap-3">
+                <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: colors.cardElevado }}>
+                  <Ionicons name="document-text-outline" size={16} color={colors.textoSecundario} />
+                </View>
+                <Text className="flex-1 text-[14px] font-medium text-textoPrimario">Documentos e laudos</Text>
+                <View className="px-[8px] py-[3px] rounded-full mr-1" style={{ backgroundColor: colors.cardElevado }}>
+                  <Text className="text-[12px] font-semibold text-textoSecundario">12</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textoTerciario} />
+              </TouchableOpacity>
+
+              <View className="h-[1px] mx-4 bg-bordaSutil" />
+
+              <TouchableOpacity activeOpacity={0.75} className="px-4 py-[14px] flex-row items-center gap-3">
+                <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: colors.cardElevado }}>
+                  <Ionicons name="headset-outline" size={16} color={colors.textoSecundario} />
+                </View>
+                <Text className="flex-1 text-[14px] font-medium text-textoPrimario">Suporte via WhatsApp</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textoTerciario} />
+              </TouchableOpacity>
+
+              <View className="h-[1px] mx-4 bg-bordaSutil" />
+
+              {!confirmandoSaida ? (
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() => setConfirmandoSaida(true)}
+                  className="px-4 py-[14px] flex-row items-center gap-3"
+                >
+                  <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: colors.vermelhoBackground }}>
+                    <Ionicons name="log-out-outline" size={16} color={colors.vermelho} />
+                  </View>
+                  <Text className="flex-1 text-[14px] font-medium text-vermelho">Sair da conta</Text>
+                </TouchableOpacity>
+              ) : (
+                <View className="px-4 py-4" style={{ backgroundColor: colors.vermelhoBackground + "60" }}>
+                  <Text className="text-[13px] font-semibold text-vermelho mb-1">
+                    Tem certeza que deseja sair?
+                  </Text>
+                  <Text className="text-[12px] text-textoTerciario mb-3">
+                    Você precisará fazer login novamente.
+                  </Text>
+                  <View className="flex-row gap-3">
+                    <TouchableOpacity
+                      onPress={() => setConfirmandoSaida(false)}
+                      disabled={saindo}
+                      className="flex-1 py-[11px] rounded-xl items-center border border-bordaSutil bg-card"
+                    >
+                      <Text className="text-[14px] font-semibold text-textoPrimario">Cancelar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => void executarSaida()}
+                      disabled={saindo}
+                      className="flex-1 py-[11px] rounded-xl items-center"
+                      style={{ backgroundColor: colors.vermelho }}
+                    >
+                      {saindo
+                        ? <ActivityIndicator size={16} color="#fff" />
+                        : <Text className="text-[14px] font-bold text-white">Sair</Text>
+                      }
+                    </TouchableOpacity>
+                  </View>
+                </View>
               )}
             </View>
-          ))}
-        </View>
 
-        {/* PREFERÊNCIAS */}
-        <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
-          PREFERÊNCIAS
-        </Text>
-        <View className="bg-card rounded-2xl border border-bordaSutil mb-3 overflow-hidden">
-          <View className="px-4 py-[14px] flex-row items-center justify-between">
-            <View className="flex-1 mr-3">
-              <Text className="text-[14px] font-medium text-textoPrimario">
-                Alertas via WhatsApp
-              </Text>
-              <Text className="text-[12px] text-textoTerciario mt-[2px]">
-                Mensagens em tempo real
-              </Text>
-            </View>
-            <Switch
-              value={alertaWhatsApp}
-              onValueChange={setAlertaWhatsApp}
-              trackColor={{ false: colors.bordaVisivel, true: colors.verde }}
-              thumbColor={colors.textoPrimario}
-            />
-          </View>
-          <View className="h-[1px] mx-4 bg-bordaSutil" />
-          <View className="px-4 py-[14px] flex-row items-center justify-between">
-            <View className="flex-1 mr-3">
-              <Text className="text-[14px] font-medium text-textoPrimario">
-                Alertas via push
-              </Text>
-              <Text className="text-[12px] text-textoTerciario mt-[2px]">
-                Notificações no celular
-              </Text>
-            </View>
-            <Switch
-              value={alertaPush}
-              onValueChange={setAlertaPush}
-              trackColor={{ false: colors.bordaVisivel, true: colors.verde }}
-              thumbColor={colors.textoPrimario}
-            />
-          </View>
-          <View className="h-[1px] mx-4 bg-bordaSutil" />
-          <View className="px-4 py-[14px] flex-row items-center justify-between">
-            <View className="flex-1 mr-3">
-              <Text className="text-[14px] font-medium text-textoPrimario">
-                Relatório semanal por e-mail
-              </Text>
-              <Text className="text-[12px] text-textoTerciario mt-[2px]">
-                Resumo toda segunda-feira
-              </Text>
-            </View>
-            <Switch
-              value={relatorioEmail}
-              onValueChange={setRelatorioEmail}
-              trackColor={{ false: colors.bordaVisivel, true: colors.verde }}
-              thumbColor={colors.textoPrimario}
-            />
-          </View>
-        </View>
-
-        {/* Antecedência dos alertas */}
-        <View className="bg-card rounded-2xl border border-bordaSutil mb-5 px-4 py-[14px]">
-          <Text className="text-[14px] font-medium text-textoPrimario">
-            Antecedência dos alertas
-          </Text>
-          <Text className="text-[12px] text-textoTerciario mt-[2px] mb-3">
-            Quanto antes você quer ser avisado
-          </Text>
-          <View className="flex-row gap-2">
-            {(["24h", "48h", "72h"] as AntecedenciaOpcao[]).map((op) => {
-              const ativa = antecedencia === op
-              return (
-                <TouchableOpacity
-                  key={op}
-                  onPress={() => setAntecedencia(op)}
-                  className={`flex-1 py-[10px] rounded-xl items-center border ${
-                    ativa
-                      ? "bg-verde border-verde"
-                      : "bg-cardElevado border-bordaVisivel"
-                  }`}
-                >
-                  <Text
-                    className={`text-[14px] font-semibold ${
-                      ativa ? "text-[#111111]" : "text-textoSecundario"
-                    }`}
-                  >
-                    {op}
-                  </Text>
-                </TouchableOpacity>
-              )
-            })}
-          </View>
-        </View>
-
-        {/* MINHA ASSINATURA */}
-        <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
-          MINHA ASSINATURA
-        </Text>
-        <View
-          className="rounded-2xl border border-roxo mb-5 px-4 py-4"
-          style={{ backgroundColor: colors.roxoBackground }}
-        >
-          <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-[15px] font-semibold text-textoPrimario">
-              Plano {usuario.plano}
+            <Text className="text-[12px] text-textoTerciario text-center">
+              v 2.6.0 · build 2026.05
             </Text>
-            <Ionicons name="card-outline" size={20} color={colors.roxo} />
-          </View>
-          <Text className="text-[28px] font-bold text-roxo">
-            {usuario.valorPlano}
-          </Text>
-          <Text className="text-[12px] text-textoTerciario mt-[3px] mb-4">
-            Próxima cobrança: 15 de junho de 2026
-          </Text>
-          <TouchableOpacity
-            activeOpacity={0.75}
-            className="rounded-xl border border-roxo py-[13px] items-center"
-            style={{ backgroundColor: colors.roxo + "18" }}
-          >
-            <Text className="text-[14px] font-semibold text-roxo">
-              Gerenciar assinatura
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* CONTA */}
-        <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-2">
-          CONTA
-        </Text>
-        <View className="bg-card rounded-2xl border border-bordaSutil mb-6 overflow-hidden">
-          <TouchableOpacity
-            activeOpacity={0.75}
-            className="px-4 py-[14px] flex-row items-center gap-3"
-          >
-            <View
-              className="w-8 h-8 rounded-lg items-center justify-center"
-              style={{ backgroundColor: colors.cardElevado }}
-            >
-              <Ionicons
-                name="key-outline"
-                size={16}
-                color={colors.textoSecundario}
-              />
-            </View>
-            <Text className="flex-1 text-[14px] font-medium text-textoPrimario">
-              Alterar senha
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colors.textoTerciario}
-            />
-          </TouchableOpacity>
-          <View className="h-[1px] mx-4 bg-bordaSutil" />
-          <TouchableOpacity
-            activeOpacity={0.75}
-            className="px-4 py-[14px] flex-row items-center gap-3"
-          >
-            <View
-              className="w-8 h-8 rounded-lg items-center justify-center"
-              style={{ backgroundColor: colors.cardElevado }}
-            >
-              <Ionicons
-                name="document-text-outline"
-                size={16}
-                color={colors.textoSecundario}
-              />
-            </View>
-            <Text className="flex-1 text-[14px] font-medium text-textoPrimario">
-              Documentos e laudos gerados
-            </Text>
-            <View
-              className="px-[8px] py-[3px] rounded-full mr-1"
-              style={{ backgroundColor: colors.cardElevado }}
-            >
-              <Text className="text-[12px] font-semibold text-textoSecundario">
-                {/* laudos count from mockData */}
-                12
-              </Text>
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colors.textoTerciario}
-            />
-          </TouchableOpacity>
-          <View className="h-[1px] mx-4 bg-bordaSutil" />
-          <TouchableOpacity
-            activeOpacity={0.75}
-            className="px-4 py-[14px] flex-row items-center gap-3"
-          >
-            <View
-              className="w-8 h-8 rounded-lg items-center justify-center"
-              style={{ backgroundColor: colors.cardElevado }}
-            >
-              <Ionicons
-                name="headset-outline"
-                size={16}
-                color={colors.textoSecundario}
-              />
-            </View>
-            <Text className="flex-1 text-[14px] font-medium text-textoPrimario">
-              Suporte via WhatsApp
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colors.textoTerciario}
-            />
-          </TouchableOpacity>
-          <View className="h-[1px] mx-4 bg-bordaSutil" />
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={handleSair}
-            className="px-4 py-[14px] flex-row items-center gap-3"
-          >
-            <View
-              className="w-8 h-8 rounded-lg items-center justify-center"
-              style={{ backgroundColor: colors.vermelhoBackground }}
-            >
-              <Ionicons
-                name="log-out-outline"
-                size={16}
-                color={colors.vermelho}
-              />
-            </View>
-            <Text className="flex-1 text-[14px] font-medium text-vermelho">
-              Sair da conta
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text className="text-[12px] text-textoTerciario text-center">
-          v 2.6.0 · build 2026.05
-        </Text>
+          </>
+        )}
       </ScrollView>
     </View>
   )

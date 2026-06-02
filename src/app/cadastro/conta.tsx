@@ -60,6 +60,12 @@ export default function ContaScreen() {
         email: data.email,
         senha: data.senha,
         telefone: stripMask(data.telefone),
+        cpfCnpj: stripMask(data.cpfCnpj),
+        nomeFazenda: data.nomeFazenda,
+        estado: data.estado,
+        municipio: data.municipio,
+        areaHectares: data.areaHectares,
+        cultura: data.cultura,
       })
       await setSession({ usuarioId: novoUsuario.id, propriedadeId: novoUsuario.id, nome: data.nome })
       router.replace("/(tabs)/home")

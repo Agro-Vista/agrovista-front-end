@@ -11,13 +11,13 @@ export const cadastroPropriedadeSchema = z.object({
   nomeFazenda: z.string().min(2, "Nome obrigatório"),
   municipio: z.string().min(2, "Município obrigatório"),
   estado: z.string().min(2, "Estado obrigatório"),
-  areaHectares: z.coerce.number().min(1, "Área obrigatória"),
+  areaHectares: z.number().min(1, "Área obrigatória"),
 })
 
 export const cadastroTalhaoSchema = z.object({
   nome: z.string().min(2, "Nome obrigatório"),
   cultura: z.string().min(2, "Cultura obrigatória"),
-  areaHectares: z.coerce.number().min(1, "Área obrigatória"),
+  areaHectares: z.number().min(1, "Área obrigatória"),
 })
 
 // Schema combinado para a tela única de criação de conta + propriedade
@@ -32,7 +32,7 @@ export const signupSchema = z
     nomeFazenda: z.string().min(2, "Nome obrigatório"),
     estado: z.string().min(2, "Estado obrigatório"),
     municipio: z.string().min(2, "Município obrigatório"),
-    areaHectares: z.coerce.number().min(1, "Área obrigatória"),
+    areaHectares: z.number().min(1, "Área obrigatória"),
     cultura: z.string().min(1, "Selecione uma cultura"),
   })
   .refine((d) => d.senha === d.confirmarSenha, {
