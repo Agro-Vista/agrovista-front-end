@@ -4,28 +4,18 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
 import { dashboard, usuario } from "@/data/mockData"
+import { ABAS, MARCADORES, type Aba } from "@/data/homeConstants"
 import { StatCard } from "@/components/StatCard"
+import { PageHeader } from "@/components/PageHeader"
 import type { AlertaItemData } from "@/components/AlertaItem"
 import { AvisoClimaCard } from "@/components/AvisoClimaCard"
 import { getAvisosClima } from "@/services/alertasClimaService"
 import { useSession } from "@/context/SessionContext"
-
-type Aba = "Mapa" | "Alertas" | "Regiões" | "IA"
-
-const ABAS: Aba[] = ["Mapa", "Alertas", "Regiões", "IA"]
-
-const MARCADORES = [
-  { label: "Alerta clim.", cor: colors.ambar, top: 44, left: "54%" as const },
-  { label: "Seca crítica", cor: colors.vermelho, top: 78, left: "18%" as const },
-  { label: "Normal", cor: colors.verde, top: 108, left: "66%" as const },
-]
 
 export default function HomeScreen() {
   const { session } = useSession()
@@ -50,104 +40,64 @@ export default function HomeScreen() {
     }
   }
 
-  const insets = useSafeAreaInsets()
-
-  const nomeSessao = session.nome || usuario.nome
-  const iniciais = nomeSessao
-    .split(" ")
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-
   return (
     <View className="flex-1 bg-bg">
 
-      {/* ─── Topo fixo (header + tabs) — nunca se move ─── */}
-      <View style={{ paddingTop: insets.top }}>
-
-      {/* Header */}
-      <View className="px-4 pb-3 pt-2 flex-row items-center justify-between">
-        <Image
-          style={{ width: 220, height: 65, marginBottom: 12 }}
-          source={require("../../../assets/images/light-logo.png")}
-          resizeMode="contain"
+      {/* Topo fixo (header + tabs) */}
+      <View>
+        <PageHeader
+          alertasAtivos={dashboard.alertasAtivos}
+          nome={session.nome || usuario.nome}
         />
-        <View className="flex-row items-center gap-[10px]">
-          {/* borderColor com alpha não tem classe NativeWind → style */}
-          <TouchableOpacity
-            className="flex-row items-center gap-[5px] bg-ambarBackground rounded-full px-[10px] py-[5px] border"
-            style={{ borderColor: colors.ambar + "40" }}
-          >
-            <Ionicons name="notifications-outline" size={13} color={colors.ambar} />
-            <Text className="text-[12px] text-ambar font-semibold">
-              {dashboard.alertasAtivos} alertas ativos
-            </Text>
-          </TouchableOpacity>
 
-          {/* backgroundColor com alpha → style */}
-          <View
-            className="w-[34px] h-[34px] rounded-full border-[1.5px] border-verde items-center justify-center"
-            style={{ backgroundColor: colors.verde + "20" }}
-          >
-            <Text className="text-[12px] font-bold text-verde">{iniciais}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ─── Sub-abas ─── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 10, alignItems: "center" }}
-      >
-        {ABAS.map((aba) => {
-          const ativa = abaAtiva === aba
-          return (
-            <TouchableOpacity
-              key={aba}
-              onPress={() => setAbaAtiva(aba)}
-              className={`px-[18px] py-[7px] rounded-full border ${
-                ativa ? "bg-verde border-verde" : "bg-card border-bordaVisivel"
-              }`}
-            >
-              <Text
-                className={`text-[13px] font-medium ${
-                  ativa ? "text-[#111111]" : "text-textoSecundario"
+        {/* Sub-abas */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 10, alignItems: "center" }}
+        >
+          {ABAS.map((aba) => {
+            const ativa = abaAtiva === aba
+            return (
+              <TouchableOpacity
+                key={aba}
+                onPress={() => setAbaAtiva(aba)}
+                className={`px-[18px] py-[7px] rounded-full border ${
+                  ativa ? "bg-verde border-verde" : "bg-card border-bordaVisivel"
                 }`}
               >
-                {aba}
-              </Text>
-            </TouchableOpacity>
-          )
-        })}
-      </ScrollView>
+                <Text
+                  className={`text-[13px] font-medium ${
+                    ativa ? "text-[#111111]" : "text-textoSecundario"
+                  }`}
+                >
+                  {aba}
+                </Text>
+              </TouchableOpacity>
+            )
+          })}
+        </ScrollView>
+      </View>
 
-      </View>{/* fim do topo fixo */}
-
-      {/* ─── Conteúdo ─── */}
+      {/* Conteúdo */}
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 28 }}
       >
-        {/* ── ABA: MAPA ── */}
+        {/* ABA: MAPA */}
         {abaAtiva === "Mapa" && (
           <>
-            {/* bg custom #081408 e borderColor com alpha → style */}
             <View
               className="mx-4 rounded-2xl overflow-hidden h-[180px] border"
               style={{ backgroundColor: "#081408", borderColor: colors.verde + "30" }}
             >
-              {/* Linhas de grade — top/left dinâmicos → style */}
               {[40, 80, 120, 160].map((y) => (
                 <View
                   key={y}
                   style={{
                     position: "absolute",
-                    top: y,
-                    left: 0,
-                    right: 0,
+                    top: y, left: 0, right: 0,
                     height: 1,
                     backgroundColor: colors.verde + "0a",
                   }}
@@ -158,16 +108,13 @@ export default function HomeScreen() {
                   key={x}
                   style={{
                     position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: x,
+                    top: 0, bottom: 0, left: x,
                     width: 1,
                     backgroundColor: colors.verde + "0a",
                   }}
                 />
               ))}
 
-              {/* Label topo */}
               <View className="absolute top-[10px] left-[12px] right-[12px] flex-row justify-between">
                 <Text className="text-[11px]" style={{ color: colors.verde + "aa" }}>
                   Centro-Oeste · Brasil
@@ -175,7 +122,6 @@ export default function HomeScreen() {
                 <Text className="text-[11px]" style={{ color: colors.verde + "66" }}>N ↑</Text>
               </View>
 
-              {/* Marcadores — top/left/cor dinâmicos → style */}
               {MARCADORES.map((m) => (
                 <View
                   key={m.label}
@@ -186,16 +132,12 @@ export default function HomeScreen() {
                     className="w-[10px] h-[10px] rounded-full"
                     style={{ backgroundColor: m.cor, elevation: 4 }}
                   />
-                  <View
-                    className="px-[5px] py-[2px] rounded"
-                    style={{ backgroundColor: "#000000cc" }}
-                  >
+                  <View className="px-[5px] py-[2px] rounded" style={{ backgroundColor: "#000000cc" }}>
                     <Text className="text-[10px]" style={{ color: m.cor }}>{m.label}</Text>
                   </View>
                 </View>
               ))}
 
-              {/* Rodapé */}
               <View className="absolute bottom-[10px] left-[12px] right-[12px] flex-row justify-between">
                 <Text className="text-[10px] text-textoTerciario">
                   LAT -13.42{"  "}LON -55.71
@@ -270,7 +212,7 @@ export default function HomeScreen() {
           </>
         )}
 
-        {/* ── ABA: ALERTAS ── */}
+        {/* ABA: ALERTAS */}
         {abaAtiva === "Alertas" && (
           <View className="mx-4 mt-1">
             <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-3">
@@ -294,7 +236,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── ABA: REGIÕES ── */}
+        {/* ABA: REGIÕES */}
         {abaAtiva === "Regiões" && (
           <View className="mx-4 mt-10 items-center gap-3">
             <View className="w-16 h-16 rounded-[20px] bg-card border border-bordaSutil items-center justify-center">
@@ -315,10 +257,9 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── ABA: IA ── */}
+        {/* ABA: IA */}
         {abaAtiva === "IA" && (
           <View className="mx-4 mt-10 items-center gap-3">
-            {/* borderColor com alpha → style */}
             <View
               className="w-16 h-16 rounded-[20px] bg-verdeBackground border items-center justify-center"
               style={{ borderColor: colors.verde + "40" }}

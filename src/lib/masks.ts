@@ -21,6 +21,13 @@ export function maskPhone(value: string): string {
     .replace(/(\d{5})(\d{1,4})$/, "$1-$2")
 }
 
+// Aplica máscara de mês/ano: MM/AAAA
+export function maskMonthYear(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 6)
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`
+}
+
 // Remove todos os caracteres não numéricos
 export function stripMask(value: string): string {
   return value.replace(/\D/g, "")

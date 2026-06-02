@@ -3,7 +3,7 @@ import type { User } from "@/types/user"
 
 export const usuarioService = {
   criar: async (data: Omit<User, "id">): Promise<User> => {
-    const usuarios = (await storage.get<User[]>(STORAGE_KEYS.USUARIOS)) ?? []
+    const usuarios = (await storage.get<User[]>(STORAGE_KEYS.USUARIOS)) ?? [] 
     if (usuarios.some((u) => u.email === data.email)) {
       throw new Error("E-mail já cadastrado")
     }

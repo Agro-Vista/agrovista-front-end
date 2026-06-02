@@ -9,6 +9,11 @@ export const talhaoService = {
     return novo
   },
 
+  buscar: async (id: number): Promise<Talhao | null> => {
+    const talhoes = (await storage.get<Talhao[]>(STORAGE_KEYS.TALHOES)) ?? []
+    return talhoes.find((t) => t.id === id) ?? null
+  },
+
   listar: async (propriedadeId: number): Promise<Talhao[]> => {
     const talhoes = (await storage.get<Talhao[]>(STORAGE_KEYS.TALHOES)) ?? []
     return talhoes.filter((t) => t.propriedadeId === propriedadeId)

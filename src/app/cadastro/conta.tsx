@@ -15,6 +15,7 @@ import {
 } from "react-native"
 
 import { BrandHeader } from "@/components/BrandHeader"
+import { CulturaChipSelector } from "@/components/CulturaChipSelector"
 import { FormField } from "@/components/FormField"
 import { signupSchema, SignupForm } from "@/schemas/cadastro.schema"
 import { usuarioService } from "@/services/usuarioService"
@@ -22,12 +23,9 @@ import { useSession } from "@/context/SessionContext"
 import { colors } from "@/constants/Colors"
 import { maskCpf, maskPhone, stripMask } from "@/lib/masks"
 
-const CULTURAS = ["Soja", "Milho", "Algodão", "Café", "Cana"] as const
-
 export default function ContaScreen() {
   const [showSenha, setShowSenha] = useState(false)
   const [showConfirmar, setShowConfirmar] = useState(false)
-  const [cultura, setCultura] = useState("Soja")
   const [loading, setLoading] = useState(false)
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const { setSession } = useSession()
@@ -280,51 +278,11 @@ export default function ContaScreen() {
             )}
           />
 
-          {/* Cultura principal — chips de seleção */}
           <Controller
             control={control}
             name="cultura"
-            render={({ field: { onChange } }) => (
-              <View>
-                <Text
-                  className="text-[#999999] uppercase mb-2 tracking-widest"
-                  style={{ fontSize: 11 }}
-                >
-                  Cultura principal
-                </Text>
-                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                  {CULTURAS.map((c) => {
-                    const ativa = c === cultura
-                    return (
-                      <TouchableOpacity
-                        key={c}
-                        onPress={() => {
-                          setCultura(c)
-                          onChange(c)
-                        }}
-                        style={{
-                          backgroundColor: ativa ? colors.verdeBackground : colors.card,
-                          borderWidth: 1,
-                          borderColor: ativa ? `${colors.verde}99` : colors.bordaSutil,
-                          borderRadius: 9999,
-                          paddingHorizontal: 16,
-                          paddingVertical: 8,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            fontWeight: "500",
-                            color: ativa ? colors.verde : colors.textoSecundario,
-                          }}
-                        >
-                          {c}
-                        </Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-              </View>
+            render={({ field: { onChange, value } }) => (
+              <CulturaChipSelector value={value} onChange={onChange} />
             )}
           />
         </View>
