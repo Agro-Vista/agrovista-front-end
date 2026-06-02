@@ -1,5 +1,5 @@
 import { View } from "react-native"
-import { STATUS_CFG } from "@/data/fieldConstants"
+import { STATUS_CFG } from "@/data/fields"
 import type { Field } from "@/types/field"
 
 type Props = { status: Field["status"] }

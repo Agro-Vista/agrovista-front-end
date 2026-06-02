@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 
 import { colors } from "@/constants/Colors"
+import { PLAN_CFG } from "@/data/plans"
 import { FieldLabel } from "@/components/FieldLabel"
 import { SectionTitle } from "@/components/SectionTitle"
 import { CropChipSelector } from "@/components/CropChipSelector"
@@ -124,6 +125,8 @@ export default function PerfilScreen() {
   const area      = user?.areaHectares ?? usuario.areaTotal
   const cultura   = user?.cultura     ?? usuario.culturas[0]
 
+  const planCfg = PLAN_CFG[user?.plano ?? "free"]
+
   return (
     <View className="flex-1 bg-bg">
       {/* Header */}
@@ -181,11 +184,11 @@ export default function PerfilScreen() {
               </Text>
               <View
                 className="flex-row items-center gap-[6px] mt-3 px-4 py-[6px] rounded-full"
-                style={{ backgroundColor: colors.roxo + "20" }}
+                style={{ backgroundColor: planCfg.bg }}
               >
-                <View className="w-[6px] h-[6px] rounded-full bg-roxo" />
-                <Text className="text-[13px] font-medium text-roxo">
-                  Plano {usuario.plano} · Ativo
+                <View className="w-[6px] h-[6px] rounded-full" style={{ backgroundColor: planCfg.cor }} />
+                <Text className="text-[13px] font-medium" style={{ color: planCfg.cor }}>
+                  Plano {planCfg.nome} · Ativo
                 </Text>
               </View>
             </>
@@ -388,23 +391,30 @@ export default function PerfilScreen() {
               MINHA ASSINATURA
             </Text>
             <View
-              className="rounded-2xl border border-roxo mb-5 px-4 py-4"
-              style={{ backgroundColor: colors.roxoBackground }}
+              className="rounded-2xl border mb-5 px-4 py-4"
+              style={{ borderColor: planCfg.cor, backgroundColor: planCfg.bg }}
             >
               <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-[15px] font-semibold text-textoPrimario">Plano {usuario.plano}</Text>
-                <Ionicons name="card-outline" size={20} color={colors.roxo} />
+                <Text className="text-[15px] font-semibold text-textoPrimario">
+                  Plano {planCfg.nome}
+                </Text>
+                <Ionicons name="card-outline" size={20} color={planCfg.cor} />
               </View>
-              <Text className="text-[28px] font-bold text-roxo">{usuario.valorPlano}</Text>
+              <Text className="text-[28px] font-bold" style={{ color: planCfg.cor }}>
+                {planCfg.preco}
+              </Text>
               <Text className="text-[12px] text-textoTerciario mt-[3px] mb-4">
-                Próxima cobrança: 15 de junho de 2026
+                {user?.plano === "free" ? "Sem cobrança" : "Próxima cobrança: 15 de junho de 2026"}
               </Text>
               <TouchableOpacity
                 activeOpacity={0.75}
-                className="rounded-xl border border-roxo py-[13px] items-center"
-                style={{ backgroundColor: colors.roxo + "18" }}
+                onPress={() => router.push("/plan-selection" as never)}
+                className="rounded-xl py-[13px] items-center border"
+                style={{ borderColor: planCfg.cor, backgroundColor: planCfg.cor + "18" }}
               >
-                <Text className="text-[14px] font-semibold text-roxo">Gerenciar assinatura</Text>
+                <Text className="text-[14px] font-semibold" style={{ color: planCfg.cor }}>
+                  Alterar plano
+                </Text>
               </TouchableOpacity>
             </View>
 

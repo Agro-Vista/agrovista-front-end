@@ -16,7 +16,7 @@ import { colors } from "@/constants/Colors"
 import { FieldLabel } from "@/components/FieldLabel"
 import { SectionTitle } from "@/components/SectionTitle"
 import { useSession } from "@/context/SessionContext"
-import { ALERTAS_TALHAO, CULTURAS, TIPOS_SOLO } from "@/data/fieldConstants"
+import { ALERTAS_TALHAO, CULTURAS, TIPOS_SOLO } from "@/data/fields"
 import { maskMonthYear } from "@/lib/masks"
 import { fieldService } from "@/services/fieldService"
 

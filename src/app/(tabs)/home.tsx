@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
 import { dashboard, usuario } from "@/data/mockData"
-import { ABAS, MARCADORES, type Aba } from "@/data/homeConstants"
+import { ABAS, MARCADORES, type Aba } from "@/data/home"
 import { StatCard } from "@/components/StatCard"
 import { PageHeader } from "@/components/PageHeader"
 import type { AlertItemData } from "@/components/AlertItem"

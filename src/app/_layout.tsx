@@ -39,6 +39,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="signup/account" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="plan-selection" />
       </Stack>
       <StatusBar style="light" />
     </SessionProvider>

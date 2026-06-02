@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/PageHeader"
 import { Sparkline } from "@/components/Sparkline"
 import { useSession } from "@/context/SessionContext"
 import { fieldService } from "@/services/fieldService"
-import { STATUS_CFG, STATUS_DESCRICAO } from "@/data/fieldConstants"
+import { STATUS_CFG, STATUS_DESCRICAO } from "@/data/fields"
 import { dashboard, usuario } from "@/data/mockData"
 import type { Field } from "@/types/field"
 

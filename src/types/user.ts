@@ -1,3 +1,7 @@
+import type { PlanId } from "@/types/plan"
+
+export type { PlanId } from "@/types/plan"
+
 export type User = {
   id: number
   nome: string
@@ -10,4 +14,5 @@ export type User = {
   municipio?: string
   areaHectares?: number
   cultura?: string
+  plano?: PlanId
 }

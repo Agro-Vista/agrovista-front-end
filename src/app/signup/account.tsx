@@ -68,7 +68,7 @@ export default function ContaScreen() {
         cultura: data.cultura,
       })
       await setSession({ usuarioId: novoUsuario.id, propriedadeId: novoUsuario.id, nome: data.nome })
-      router.replace("/(tabs)/home")
+      router.replace("/plan-selection?from=signup" as never)
     } catch (err) {
       setErroGeral(err instanceof Error ? err.message : "Erro ao criar conta. Verifique os dados e tente novamente.")
     } finally {
