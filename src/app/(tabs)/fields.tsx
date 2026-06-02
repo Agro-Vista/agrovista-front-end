@@ -7,19 +7,19 @@ import { colors } from "@/constants/Colors"
 import { PageHeader } from "@/components/PageHeader"
 import { Sparkline } from "@/components/Sparkline"
 import { useSession } from "@/context/SessionContext"
-import { talhaoService } from "@/services/talhaoService"
-import { STATUS_CFG, STATUS_DESCRICAO } from "@/data/talhaoConstants"
+import { fieldService } from "@/services/fieldService"
+import { STATUS_CFG, STATUS_DESCRICAO } from "@/data/fieldConstants"
 import { dashboard, usuario } from "@/data/mockData"
-import type { Talhao } from "@/types/talhao"
+import type { Field } from "@/types/field"
 
 export default function TalhoesScreen() {
   const { session } = useSession()
-  const [talhoes, setTalhoes] = useState<Talhao[]>([])
+  const [talhoes, setTalhoes] = useState<Field[]>([])
 
   useFocusEffect(
     useCallback(() => {
       if (!session.propriedadeId) return
-      void talhaoService.listar(session.propriedadeId).then(setTalhoes)
+      void fieldService.listar(session.propriedadeId).then(setTalhoes)
     }, [session.propriedadeId])
   )
 
@@ -109,7 +109,7 @@ export default function TalhoesScreen() {
                 <TouchableOpacity
                   key={talhao.id}
                   activeOpacity={0.75}
-                  onPress={() => router.push(`/talhoes/${talhao.id}` as Href)}
+                  onPress={() => router.push(`/fields/${talhao.id}` as Href)}
                   className="bg-card rounded-2xl border border-bordaSutil p-4"
                 >
                   <View className="flex-row items-start justify-between mb-4">
@@ -172,7 +172,7 @@ export default function TalhoesScreen() {
         {/* Card adicionar talhão */}
         <TouchableOpacity
           activeOpacity={0.75}
-          onPress={() => router.push("/talhoes/novo" as Href)}
+          onPress={() => router.push("/fields/new" as Href)}
           className="rounded-2xl border border-roxo mt-3 bg-roxoBackground p-4"
         >
           <View className="flex-row items-center gap-3">

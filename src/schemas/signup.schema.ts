@@ -1,26 +1,25 @@
 import { z } from "zod"
 
-export const cadastroContaSchema = z.object({
+export const accountSchema = z.object({
   nome: z.string().min(3, "Nome obrigatório"),
   email: z.email("E-mail inválido"),
   senha: z.string().min(6, "Mínimo 6 caracteres"),
   telefone: z.string().min(10, "Telefone inválido"),
 })
 
-export const cadastroPropriedadeSchema = z.object({
+export const propertySchema = z.object({
   nomeFazenda: z.string().min(2, "Nome obrigatório"),
   municipio: z.string().min(2, "Município obrigatório"),
   estado: z.string().min(2, "Estado obrigatório"),
   areaHectares: z.number().min(1, "Área obrigatória"),
 })
 
-export const cadastroTalhaoSchema = z.object({
+export const createFieldSchema = z.object({
   nome: z.string().min(2, "Nome obrigatório"),
   cultura: z.string().min(2, "Cultura obrigatória"),
   areaHectares: z.number().min(1, "Área obrigatória"),
 })
 
-// Schema combinado para a tela única de criação de conta + propriedade
 export const signupSchema = z
   .object({
     nome: z.string().min(3, "Nome obrigatório"),
@@ -40,7 +39,7 @@ export const signupSchema = z
     path: ["confirmarSenha"],
   })
 
-export type CadastroContaForm = z.infer<typeof cadastroContaSchema>
-export type CadastroPropriedadeForm = z.infer<typeof cadastroPropriedadeSchema>
-export type CadastroTalhaoForm = z.infer<typeof cadastroTalhaoSchema>
+export type AccountForm = z.infer<typeof accountSchema>
+export type PropertyForm = z.infer<typeof propertySchema>
+export type CreateFieldForm = z.infer<typeof createFieldSchema>
 export type SignupForm = z.infer<typeof signupSchema>

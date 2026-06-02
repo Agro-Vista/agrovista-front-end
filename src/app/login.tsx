@@ -18,7 +18,7 @@ import { BrandHeader } from "@/components/BrandHeader"
 import { FormField } from "@/components/FormField"
 import { loginSchema, LoginForm } from "@/schemas/login.schema"
 import { useSession } from "@/context/SessionContext"
-import { usuarioService } from "@/services/usuarioService"
+import { userService } from "@/services/userService"
 import { colors } from "@/constants/Colors"
 
 export default function LoginScreen() {
@@ -39,7 +39,7 @@ export default function LoginScreen() {
   async function entrar(data: LoginForm) {
     setLoading(true)
     try {
-      const usuario = await usuarioService.login(data.email, data.senha)
+      const usuario = await userService.login(data.email, data.senha)
       if (!usuario) {
         setError("root", { message: "E-mail ou senha incorretos." })
         return
@@ -166,7 +166,7 @@ export default function LoginScreen() {
             <Text className="text-[#999999]" style={{ fontSize: 13 }}>
               Ainda não tem conta?{" "}
             </Text>
-            <TouchableOpacity onPress={() => router.push("/cadastro/conta")}>
+            <TouchableOpacity onPress={() => router.push("/signup/account")}>
               <Text className="text-[#818cf8]" style={{ fontSize: 13 }}>
                 Criar conta grátis
               </Text>

@@ -15,10 +15,10 @@ import {
 } from "react-native"
 
 import { BrandHeader } from "@/components/BrandHeader"
-import { CulturaChipSelector } from "@/components/CulturaChipSelector"
+import { CropChipSelector } from "@/components/CropChipSelector"
 import { FormField } from "@/components/FormField"
-import { signupSchema, SignupForm } from "@/schemas/cadastro.schema"
-import { usuarioService } from "@/services/usuarioService"
+import { signupSchema, SignupForm } from "@/schemas/signup.schema"
+import { userService } from "@/services/userService"
 import { useSession } from "@/context/SessionContext"
 import { colors } from "@/constants/Colors"
 import { maskCpf, maskPhone, stripMask } from "@/lib/masks"
@@ -55,7 +55,7 @@ export default function ContaScreen() {
     setLoading(true)
     setErroGeral(null)
     try {
-      const novoUsuario = await usuarioService.criar({
+      const novoUsuario = await userService.criar({
         nome: data.nome,
         email: data.email,
         senha: data.senha,
@@ -288,7 +288,7 @@ export default function ContaScreen() {
             control={control}
             name="cultura"
             render={({ field: { onChange, value } }) => (
-              <CulturaChipSelector value={value} onChange={onChange} />
+              <CropChipSelector value={value} onChange={onChange} />
             )}
           />
         </View>

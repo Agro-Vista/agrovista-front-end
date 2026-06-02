@@ -38,7 +38,7 @@ export function PageHeader({ alertasAtivos, nome }: Props) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => router.push("/perfil")}
+            onPress={() => router.push("/profile")}
             className="w-[34px] h-[34px] rounded-full border-[1.5px] border-verde items-center justify-center"
             style={{ backgroundColor: colors.verde + "20" }}
           >

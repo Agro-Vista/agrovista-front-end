@@ -1,6 +1,6 @@
 import { http } from "@/lib/http"
-import type { NivelAlerta, TipoAlerta } from "@/types/alerta"
-import type { AlertaItemData } from "@/components/AlertaItem"
+import type { AlertLevel, AlertType } from "@/types/alert"
+import type { AlertItemData } from "@/components/AlertItem"
 
 const INMET_BASE = "https://apiprevmet3.inmet.gov.br"
 
@@ -33,14 +33,14 @@ const SIGLAS: Record<string, string> = {
   "Santa Catarina": "SC", "São Paulo": "SP", Sergipe: "SE", Tocantins: "TO",
 }
 
-function mapNivel(aviso_cor: string, severidade: number): NivelAlerta {
+function mapLevel(aviso_cor: string, severidade: number): AlertLevel {
   if (severidade >= 8) return "ALTO"
   if (aviso_cor === "#F96602" || aviso_cor === "#FF0000") return "ALTO"
   if (aviso_cor === "#FFFE00") return "MEDIO"
   return "BAIXO"
 }
 
-function mapTipo(descricao: string): TipoAlerta {
+function mapType(descricao: string): AlertType {
   const d = descricao.toLowerCase()
   if (d.includes("geada")) return "GEADA"
   if (d.includes("vendaval") || d.includes("tempestade") || d.includes("vento forte")) return "VENTO_FORTE"
@@ -49,7 +49,7 @@ function mapTipo(descricao: string): TipoAlerta {
   return "RISCO_HIDRICO"
 }
 
-function regiaoNome(aviso: INMETAviso): string {
+function regionName(aviso: INMETAviso): string {
   const estados = aviso.estados.split(",").map((e) => e.trim())
   const siglas = estados
     .slice(0, 3)
@@ -59,7 +59,7 @@ function regiaoNome(aviso: INMETAviso): string {
   return regiao ? `${siglas} · ${regiao}` : siglas
 }
 
-function formatInicio(inicio: string): string {
+function formatStart(inicio: string): string {
   const [datePart, timePart] = inicio.split(" ")
   const today = new Date().toISOString().split("T")[0]
   const prefix = datePart === today ? "Hoje" : "Amanhã"
@@ -67,29 +67,29 @@ function formatInicio(inicio: string): string {
   return `${prefix}, ${hora}`
 }
 
-export const getAvisosClima = async (): Promise<AlertaItemData[]> => {
+export const getWeatherAlerts = async (): Promise<AlertItemData[]> => {
   const data = await http.get<INMETResponse>(`${INMET_BASE}/avisos/ativos`)
-  const todos = [...(data.hoje ?? []), ...(data.futuro ?? [])]
+  const all = [...(data.hoje ?? []), ...(data.futuro ?? [])]
 
-  const vistos = new Set<string>()
-  const resultado: AlertaItemData[] = []
+  const seen = new Set<string>()
+  const result: AlertItemData[] = []
 
-  for (const aviso of todos) {
-    const chave = `${aviso.descricao}|${aviso.regioes}|${aviso.aviso_cor}`
-    if (vistos.has(chave)) continue
-    vistos.add(chave)
+  for (const aviso of all) {
+    const key = `${aviso.descricao}|${aviso.regioes}|${aviso.aviso_cor}`
+    if (seen.has(key)) continue
+    seen.add(key)
 
-    resultado.push({
-      tipo: mapTipo(aviso.descricao),
-      nivel: mapNivel(aviso.aviso_cor, aviso.id_severidade),
-      talhaoNome: regiaoNome(aviso),
-      createdAt: formatInicio(aviso.inicio),
+    result.push({
+      tipo: mapType(aviso.descricao),
+      nivel: mapLevel(aviso.aviso_cor, aviso.id_severidade),
+      talhaoNome: regionName(aviso),
+      createdAt: formatStart(aviso.inicio),
       descricao: aviso.riscos?.[0] ?? aviso.descricao,
       label: aviso.descricao,
     })
 
-    if (resultado.length >= 6) break
+    if (result.length >= 6) break
   }
 
-  return resultado
+  return result
 }

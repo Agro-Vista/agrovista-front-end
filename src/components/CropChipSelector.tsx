@@ -1,15 +1,15 @@
 import { Text, TouchableOpacity, View } from "react-native"
 import { colors } from "@/constants/Colors"
 
-export const CULTURAS_BASICAS = ["Soja", "Milho", "Algodão", "Café", "Cana"] as const
-export type CulturaBasica = (typeof CULTURAS_BASICAS)[number]
+export const BASIC_CROPS = ["Soja", "Milho", "Algodão", "Café", "Cana"] as const
+export type CropType = (typeof BASIC_CROPS)[number]
 
 type Props = {
   value: string
-  onChange: (cultura: string) => void
+  onChange: (crop: string) => void
 }
 
-export function CulturaChipSelector({ value, onChange }: Props) {
+export function CropChipSelector({ value, onChange }: Props) {
   return (
     <View>
       <Text
@@ -19,16 +19,16 @@ export function CulturaChipSelector({ value, onChange }: Props) {
         Cultura principal
       </Text>
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-        {CULTURAS_BASICAS.map((c) => {
-          const ativa = c === value
+        {BASIC_CROPS.map((c) => {
+          const active = c === value
           return (
             <TouchableOpacity
               key={c}
               onPress={() => onChange(c)}
               style={{
-                backgroundColor: ativa ? colors.verdeBackground : colors.card,
+                backgroundColor: active ? colors.verdeBackground : colors.card,
                 borderWidth: 1,
-                borderColor: ativa ? `${colors.verde}99` : colors.bordaSutil,
+                borderColor: active ? `${colors.verde}99` : colors.bordaSutil,
                 borderRadius: 9999,
                 paddingHorizontal: 16,
                 paddingVertical: 8,
@@ -38,7 +38,7 @@ export function CulturaChipSelector({ value, onChange }: Props) {
                 style={{
                   fontSize: 13,
                   fontWeight: "500",
-                  color: ativa ? colors.verde : colors.textoSecundario,
+                  color: active ? colors.verde : colors.textoSecundario,
                 }}
               >
                 {c}

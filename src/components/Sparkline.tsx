@@ -1,8 +1,8 @@
 import { View } from "react-native"
-import { STATUS_CFG } from "@/data/talhaoConstants"
-import type { Talhao } from "@/types/talhao"
+import { STATUS_CFG } from "@/data/fieldConstants"
+import type { Field } from "@/types/field"
 
-type Props = { status: Talhao["status"] }
+type Props = { status: Field["status"] }
 
 export function Sparkline({ status }: Props) {
   const cor = STATUS_CFG[status].cor

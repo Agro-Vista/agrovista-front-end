@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons"
-import { router } from "expo-router"
-import { useState } from "react"
+import { router, useLocalSearchParams } from "expo-router"
+import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,30 +15,56 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { colors } from "@/constants/Colors"
 import { FieldLabel } from "@/components/FieldLabel"
 import { SectionTitle } from "@/components/SectionTitle"
-import { useSession } from "@/context/SessionContext"
-import { ALERTAS_TALHAO, CULTURAS, TIPOS_SOLO } from "@/data/talhaoConstants"
+import { ALERTAS_TALHAO, CULTURAS, STATUS_CFG, TIPOS_SOLO } from "@/data/fieldConstants"
 import { maskMonthYear } from "@/lib/masks"
-import { talhaoService } from "@/services/talhaoService"
+import { fieldService } from "@/services/fieldService"
+import type { Field } from "@/types/field"
 
-export default function NovoTalhao() {
+export default function EditField() {
   const insets = useSafeAreaInsets()
-  const { session } = useSession()
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const talhaoId = parseInt(id, 10)
 
-  const [nome,       setNome]       = useState("")
-  const [apelido,    setApelido]    = useState("")
-  const [municipio,  setMunicipio]  = useState("")
-  const [area,       setArea]       = useState("")
-  const [solo,       setSolo]       = useState<string>("Latossolo")
-  const [cultura,    setCultura]    = useState<string>("Soja")
-  const [dataInicio, setDataInicio] = useState("")
-  const [dataFim,    setDataFim]    = useState("")
-  const [produtiv,   setProdutiv]   = useState("")
+  const [carregando, setCarregando] = useState(true)
+  const [talhao, setTalhao] = useState<Field | null>(null)
+
+  const [nome,        setNome]        = useState("")
+  const [apelido,     setApelido]     = useState("")
+  const [municipio,   setMunicipio]   = useState("")
+  const [area,        setArea]        = useState("")
+  const [solo,        setSolo]        = useState<string>("Latossolo")
+  const [cultura,     setCultura]     = useState<string>("Soja")
+  const [dataInicio,  setDataInicio]  = useState("")
+  const [dataFim,     setDataFim]     = useState("")
+  const [produtiv,    setProdutiv]    = useState("")
   const [alertaJanel, setAlertaJanel] = useState(true)
   const [alertas, setAlertas] = useState<Record<string, boolean>>(
     Object.fromEntries(ALERTAS_TALHAO.map((a) => [a.id, a.padrao]))
   )
-  const [loading, setLoading] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
+  const [loading,    setLoading]    = useState(false)
+  const [deletando,  setDeletando]  = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
+  const [erro,       setErro]       = useState<string | null>(null)
+
+  useEffect(() => {
+    fieldService.buscar(talhaoId).then((t) => {
+      if (t) {
+        setTalhao(t)
+        setNome(t.nome)
+        setApelido(t.apelido ?? "")
+        setMunicipio(t.municipio ?? "")
+        setArea(String(t.areaHectares))
+        setSolo(t.tipoSolo ?? "Latossolo")
+        setCultura(t.cultura)
+        setDataInicio(t.dataInicioPlantio ?? "")
+        setDataFim(t.dataFimPlantio ?? "")
+        setProdutiv(t.produtividadeEsperada ?? "")
+        setAlertaJanel(t.alertaForaJanela ?? true)
+        if (t.alertas) setAlertas(t.alertas)
+      }
+      setCarregando(false)
+    })
+  }, [talhaoId])
 
   const toggleAlerta = (id: string) =>
     setAlertas((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -53,16 +79,11 @@ export default function NovoTalhao() {
       setErro("Informe a área em hectares.")
       return
     }
-    if (!session.propriedadeId) {
-      setErro("Sessão inválida. Faça login novamente.")
-      return
-    }
 
     setErro(null)
     setLoading(true)
     try {
-      await talhaoService.criar({
-        propriedadeId: session.propriedadeId,
+      await fieldService.atualizar(talhaoId, {
         nome: nome.trim(),
         apelido: apelido.trim() || undefined,
         municipio: municipio.trim() || undefined,
@@ -74,7 +95,6 @@ export default function NovoTalhao() {
         produtividadeEsperada: produtiv || undefined,
         alertas,
         alertaForaJanela: alertaJanel,
-        status: "OK",
       })
       router.back()
     } catch (err) {
@@ -82,6 +102,42 @@ export default function NovoTalhao() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function executarExclusao() {
+    setDeletando(true)
+    try {
+      await fieldService.deletar(talhaoId)
+      router.back()
+    } catch {
+      setErro("Erro ao excluir talhão.")
+      setDeletando(false)
+      setConfirmando(false)
+    }
+  }
+
+  const statusCfg = talhao ? STATUS_CFG[talhao.status] : null
+
+  if (carregando) {
+    return (
+      <View className="flex-1 bg-bg items-center justify-center">
+        <ActivityIndicator color={colors.verde} size={32} />
+      </View>
+    )
+  }
+
+  if (!talhao) {
+    return (
+      <View className="flex-1 bg-bg items-center justify-center" style={{ gap: 12 }}>
+        <Ionicons name="alert-circle-outline" size={40} color={colors.vermelho} />
+        <Text className="text-textoSecundario text-[15px] font-semibold">
+          Talhão não encontrado
+        </Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text className="text-roxo text-[14px]">Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    )
   }
 
   return (
@@ -97,15 +153,17 @@ export default function NovoTalhao() {
             <Text className="text-roxo text-[16px]">Voltar</Text>
           </TouchableOpacity>
           <Text className="text-textoPrimario text-[16px] font-bold">
-            Novo talhão
+            Editar talhão
           </Text>
-          <TouchableOpacity onPress={salvar} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator size={16} color={colors.verde} />
-            ) : (
-              <Text className="text-verde text-[16px] font-semibold">Salvar</Text>
-            )}
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-4">
+            <TouchableOpacity onPress={salvar} disabled={loading}>
+              {loading ? (
+                <ActivityIndicator size={16} color={colors.verde} />
+              ) : (
+                <Text className="text-verde text-[16px] font-semibold">Salvar</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -113,6 +171,19 @@ export default function NovoTalhao() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
       >
+        {/* Badge de status atual */}
+        {statusCfg && (
+          <View
+            className="flex-row items-center self-start rounded-full px-3 py-[6px] mb-2 gap-2"
+            style={{ backgroundColor: statusCfg.bg, borderWidth: 1, borderColor: statusCfg.cor + "50" }}
+          >
+            <View className="w-[6px] h-[6px] rounded-full" style={{ backgroundColor: statusCfg.cor }} />
+            <Text className="text-[12px] font-semibold" style={{ color: statusCfg.cor }}>
+              {statusCfg.label}
+            </Text>
+          </View>
+        )}
+
         {/* IDENTIFICAÇÃO */}
         <SectionTitle>IDENTIFICAÇÃO</SectionTitle>
 
@@ -150,86 +221,6 @@ export default function NovoTalhao() {
         <TouchableOpacity className="bg-card rounded-xl px-4 py-[14px] border border-bordaSutil mb-4 flex-row items-center justify-between">
           <Text className="text-textoTerciario text-[15px]">Mato Grosso</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textoTerciario} />
-        </TouchableOpacity>
-
-        <FieldLabel>COORDENADAS</FieldLabel>
-        <TouchableOpacity className="bg-card rounded-xl px-4 py-[14px] border border-bordaSutil mb-4 flex-row items-center justify-between">
-          <Text className="text-textoTerciario text-[15px]">Importar do GPS</Text>
-          <Ionicons name="location-outline" size={18} color={colors.roxo} />
-        </TouchableOpacity>
-
-        {/* Área de polígono decorativa */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          className="rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: colors.verdeBackground,
-            height: 170,
-            borderWidth: 1,
-            borderColor: colors.verde + "25",
-          }}
-        >
-          <View className="absolute inset-0 overflow-hidden opacity-20">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <View
-                key={i}
-                className="absolute"
-                style={{
-                  width: 1,
-                  height: 400,
-                  backgroundColor: colors.verde,
-                  left: i * 22 - 60,
-                  top: -80,
-                  transform: [{ rotate: "45deg" }],
-                }}
-              />
-            ))}
-          </View>
-
-          <View className="flex-1 items-center justify-center">
-            <View className="absolute" style={{ width: 240, height: 115 }}>
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0, left: 0, right: 0, bottom: 0,
-                  borderWidth: 1.5,
-                  borderColor: colors.verde + "AA",
-                  borderStyle: "dashed",
-                  borderRadius: 4,
-                  transform: [{ rotate: "-3deg" }],
-                }}
-              />
-            </View>
-
-            {(
-              [
-                { top: 18,  left: 52  },
-                { top: 14,  right: 60 },
-                { top: 56,  right: 30 },
-                { bottom: 24, right: 50 },
-                { bottom: 22, left: 40 },
-                { top: 80,  left: 95  },
-              ] as const
-            ).map((pos, i) => (
-              <View
-                key={i}
-                className="absolute rounded-full"
-                style={{ width: 8, height: 8, backgroundColor: colors.verde, ...(pos as object) }}
-              />
-            ))}
-
-            <View
-              className="px-5 py-[9px] rounded-full"
-              style={{ backgroundColor: colors.cardElevado + "E0" }}
-            >
-              <Text
-                className="text-textoPrimario text-[13px] font-semibold"
-                style={{ fontFamily: "SpaceMono" }}
-              >
-                Toque para desenhar o polígono
-              </Text>
-            </View>
-          </View>
         </TouchableOpacity>
 
         {/* PROPRIEDADE */}
@@ -407,7 +398,7 @@ export default function NovoTalhao() {
           ))}
         </View>
 
-        {/* Erro de validação */}
+        {/* Erro */}
         {erro && (
           <View className="mt-5 p-3 bg-[#2d0f0f] border border-[#ef4444] rounded-xl">
             <Text className="text-[#f87171] text-center" style={{ fontSize: 13 }}>
@@ -427,9 +418,59 @@ export default function NovoTalhao() {
           {loading ? (
             <ActivityIndicator color={colors.bg} size={20} />
           ) : (
-            <Text className="text-bg text-[16px] font-bold">Salvar talhão</Text>
+            <Text className="text-bg text-[16px] font-bold">Salvar alterações</Text>
           )}
         </TouchableOpacity>
+
+        {/* Excluir talhão */}
+        {!confirmando ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setConfirmando(true)}
+            disabled={deletando}
+            className="rounded-2xl py-[18px] items-center mt-3 border"
+            style={{ borderColor: colors.vermelho + "60" }}
+          >
+            <Text className="text-[16px] font-semibold" style={{ color: colors.vermelho }}>
+              Excluir talhão
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View
+            className="rounded-2xl mt-3 border p-4"
+            style={{ borderColor: colors.vermelho + "60", backgroundColor: colors.vermelhoBackground }}
+          >
+            <Text className="text-[14px] font-semibold text-center mb-1" style={{ color: colors.vermelho }}>
+              Excluir "{nome}"?
+            </Text>
+            <Text className="text-[12px] text-textoTerciario text-center mb-4">
+              Esta ação não pode ser desfeita.
+            </Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setConfirmando(false)}
+                disabled={deletando}
+                className="flex-1 rounded-xl py-[13px] items-center border border-bordaSutil bg-card"
+              >
+                <Text className="text-[14px] font-semibold text-textoPrimario">Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => void executarExclusao()}
+                disabled={deletando}
+                className="flex-1 rounded-xl py-[13px] items-center"
+                style={{ backgroundColor: colors.vermelho }}
+              >
+                {deletando ? (
+                  <ActivityIndicator size={16} color="#fff" />
+                ) : (
+                  <Text className="text-[14px] font-bold text-white">Excluir</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   )

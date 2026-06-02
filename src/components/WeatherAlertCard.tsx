@@ -9,7 +9,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
-import type { AlertaItemData } from "@/components/AlertaItem"
+import type { AlertItemData } from "@/components/AlertItem"
 
 const NIVEL_CONFIG = {
   ALTO: {
@@ -41,10 +41,10 @@ const TIPO_LABEL: Record<string, string> = {
 }
 
 type Props = {
-  aviso: AlertaItemData
+  aviso: AlertItemData
 }
 
-export function AvisoClimaCard({ aviso }: Props) {
+export function WeatherAlertCard({ aviso }: Props) {
   const [modalVisivel, setModalVisivel] = useState(false)
   const cfg = NIVEL_CONFIG[aviso.nivel]
 

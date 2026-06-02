@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSession } from "@/context/SessionContext"
 import { colors } from "@/constants/Colors"
 
-// Guard de autenticação: redireciona para login se não houver sessão ativa
 export default function TabLayout() {
   const { session } = useSession()
 
@@ -40,7 +39,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="talhoes"
+        name="fields"
         options={{
           title: "Talhões",
           tabBarIcon: ({ color }) => (
@@ -49,7 +48,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="historico"
+        name="history"
         options={{
           title: "Histórico",
           tabBarIcon: ({ color }) => (
@@ -67,7 +66,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="planos"
+        name="plans"
         options={{
           title: "Planos",
           tabBarIcon: ({ color }) => (

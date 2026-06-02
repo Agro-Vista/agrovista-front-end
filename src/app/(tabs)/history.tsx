@@ -10,7 +10,7 @@ import {
   PERIODO_DIAS,
   RESULTADO_CFG,
   TAXA_ACERTO,
-} from "@/data/historicoConstants"
+} from "@/data/historyConstants"
 import { dashboard, usuario } from "@/data/mockData"
 
 export default function HistoricoScreen() {

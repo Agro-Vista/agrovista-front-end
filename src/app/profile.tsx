@@ -15,9 +15,9 @@ import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
 import { FieldLabel } from "@/components/FieldLabel"
 import { SectionTitle } from "@/components/SectionTitle"
-import { CulturaChipSelector } from "@/components/CulturaChipSelector"
+import { CropChipSelector } from "@/components/CropChipSelector"
 import { useSession } from "@/context/SessionContext"
-import { usuarioService } from "@/services/usuarioService"
+import { userService } from "@/services/userService"
 import { maskPhone, stripMask } from "@/lib/masks"
 import { usuario } from "@/data/mockData"
 import type { User } from "@/types/user"
@@ -57,7 +57,7 @@ export default function PerfilScreen() {
 
   useEffect(() => {
     if (!session.usuarioId) return
-    void usuarioService.buscar(session.usuarioId).then((u) => {
+    void userService.buscar(session.usuarioId).then((u) => {
       if (!u) return
       setUser(u)
       populaEdicao(u)
@@ -87,7 +87,7 @@ export default function PerfilScreen() {
     setSalvando(true)
     setErroEdit(null)
     try {
-      const atualizado = await usuarioService.atualizar(session.usuarioId, {
+      const atualizado = await userService.atualizar(session.usuarioId, {
         nome:        nomeEdit.trim(),
         email:       emailEdit.trim(),
         telefone:    stripMask(telefoneEdit),
@@ -276,7 +276,7 @@ export default function PerfilScreen() {
             />
 
             <SectionTitle>CULTURA PRINCIPAL</SectionTitle>
-            <CulturaChipSelector value={culturaEdit} onChange={setCulturaEdit} />
+            <CropChipSelector value={culturaEdit} onChange={setCulturaEdit} />
 
             {erroEdit && (
               <View className="mt-4 p-3 bg-[#2d0f0f] border border-[#ef4444] rounded-xl">

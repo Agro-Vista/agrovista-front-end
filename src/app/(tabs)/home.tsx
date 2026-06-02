@@ -12,15 +12,15 @@ import { dashboard, usuario } from "@/data/mockData"
 import { ABAS, MARCADORES, type Aba } from "@/data/homeConstants"
 import { StatCard } from "@/components/StatCard"
 import { PageHeader } from "@/components/PageHeader"
-import type { AlertaItemData } from "@/components/AlertaItem"
-import { AvisoClimaCard } from "@/components/AvisoClimaCard"
-import { getAvisosClima } from "@/services/alertasClimaService"
+import type { AlertItemData } from "@/components/AlertItem"
+import { WeatherAlertCard } from "@/components/WeatherAlertCard"
+import { getWeatherAlerts } from "@/services/weatherAlertsService"
 import { useSession } from "@/context/SessionContext"
 
 export default function HomeScreen() {
   const { session } = useSession()
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Mapa")
-  const [avisosAPI, setAvisosAPI] = useState<AlertaItemData[]>([])
+  const [avisosAPI, setAvisosAPI] = useState<AlertItemData[]>([])
   const [loadingAvisos, setLoadingAvisos] = useState(false)
   const [erroAvisos, setErroAvisos] = useState(false)
 
@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const fetchAvisos = async () => {
     setLoadingAvisos(true)
     try {
-      const data = await getAvisosClima()
+      const data = await getWeatherAlerts()
       setAvisosAPI(data)
     } catch {
       setErroAvisos(true)
@@ -205,7 +205,7 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 avisosAPI.map((alerta, idx) => (
-                  <AvisoClimaCard key={idx} aviso={alerta} />
+                  <WeatherAlertCard key={idx} aviso={alerta} />
                 ))
               )}
             </View>
@@ -230,7 +230,7 @@ export default function HomeScreen() {
               </View>
             ) : (
               avisosAPI.map((alerta, idx) => (
-                <AvisoClimaCard key={idx} aviso={alerta} />
+                <WeatherAlertCard key={idx} aviso={alerta} />
               ))
             )}
           </View>

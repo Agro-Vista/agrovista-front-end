@@ -1,25 +1,25 @@
 import { View, Text, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
-import type { TipoAlerta, NivelAlerta } from "@/types/alerta"
+import type { AlertType, AlertLevel } from "@/types/alert"
 
-const NIVEL: Record<NivelAlerta, { cor: string; bg: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  ALTO: { cor: colors.vermelho, bg: colors.vermelhoBackground, icon: "flame-outline" },
-  MEDIO: { cor: colors.ambar, bg: colors.ambarBackground, icon: "warning-outline" },
-  BAIXO: { cor: colors.verde, bg: colors.verdeBackground, icon: "leaf-outline" },
+const LEVEL_CFG: Record<AlertLevel, { cor: string; bg: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  ALTO:  { cor: colors.vermelho, bg: colors.vermelhoBackground, icon: "flame-outline"   },
+  MEDIO: { cor: colors.ambar,    bg: colors.ambarBackground,    icon: "warning-outline" },
+  BAIXO: { cor: colors.verde,    bg: colors.verdeBackground,    icon: "leaf-outline"    },
 }
 
-const TIPO_LABEL: Record<TipoAlerta, string> = {
-  RISCO_HIDRICO: "Seca crítica",
-  FRENTE_FRIA: "Frente fria",
+const TYPE_LABEL: Record<AlertType, string> = {
+  RISCO_HIDRICO:  "Seca crítica",
+  FRENTE_FRIA:    "Frente fria",
   JANELA_PLANTIO: "Janela plantio",
-  GEADA: "Geada",
-  VENTO_FORTE: "Vento forte",
+  GEADA:          "Geada",
+  VENTO_FORTE:    "Vento forte",
 }
 
-export type AlertaItemData = {
-  tipo: TipoAlerta
-  nivel: NivelAlerta
+export type AlertItemData = {
+  tipo: AlertType
+  nivel: AlertLevel
   talhaoNome: string
   createdAt: string
   descricao: string
@@ -27,12 +27,12 @@ export type AlertaItemData = {
 }
 
 type Props = {
-  alerta: AlertaItemData
+  alerta: AlertItemData
   onPress?: () => void
 }
 
-export function AlertaItem({ alerta, onPress }: Props) {
-  const cfg = NIVEL[alerta.nivel]
+export function AlertItem({ alerta, onPress }: Props) {
+  const cfg = LEVEL_CFG[alerta.nivel]
 
   return (
     <TouchableOpacity
@@ -72,9 +72,9 @@ export function AlertaItem({ alerta, onPress }: Props) {
           }}
         >
           <Text style={{ fontSize: 13, fontWeight: "600", color: colors.textoPrimario, flex: 1, marginRight: 8 }}>
-            {alerta.label ?? TIPO_LABEL[alerta.tipo]} — {alerta.talhaoNome}
+            {alerta.label ?? TYPE_LABEL[alerta.tipo]} — {alerta.talhaoNome}
           </Text>
-          <Text style={{ fontSize:  11, color: colors.textoTerciario }}>{alerta.createdAt}</Text>
+          <Text style={{ fontSize: 11, color: colors.textoTerciario }}>{alerta.createdAt}</Text>
         </View>
         <Text style={{ fontSize: 12, color: colors.textoSecundario, lineHeight: 18 }} numberOfLines={2}>
           {alerta.descricao}

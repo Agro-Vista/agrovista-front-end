@@ -1,17 +1,17 @@
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
-import type { Talhao } from "@/types/talhao"
+import type { Field } from "@/types/field"
 
 export const STATUS_CFG: Record<
-  Talhao["status"],
+  Field["status"],
   { cor: string; bg: string; label: string; icon: keyof typeof Ionicons.glyphMap }
 > = {
-  OK:      { cor: colors.verde,    bg: colors.verdeBackground,   label: "OK",      icon: "leaf-outline"         },
-  ATENCAO: { cor: colors.ambar,    bg: colors.ambarBackground,   label: "Atenção", icon: "warning-outline"      },
-  RISCO:   { cor: colors.vermelho, bg: colors.vermelhoBackground, label: "Risco",  icon: "alert-circle-outline" },
+  OK:      { cor: colors.verde,    bg: colors.verdeBackground,    label: "OK",      icon: "leaf-outline"         },
+  ATENCAO: { cor: colors.ambar,    bg: colors.ambarBackground,    label: "Atenção", icon: "warning-outline"      },
+  RISCO:   { cor: colors.vermelho, bg: colors.vermelhoBackground, label: "Risco",   icon: "alert-circle-outline" },
 }
 
-export const STATUS_DESCRICAO: Record<Talhao["status"], string> = {
+export const STATUS_DESCRICAO: Record<Field["status"], string> = {
   OK:      "Umidade do solo · 30d",
   ATENCAO: "Estresse hídrico subindo",
   RISCO:   "Déficit hídrico 43% < média",

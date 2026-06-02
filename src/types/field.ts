@@ -1,4 +1,4 @@
-export type Talhao = {
+export type Field = {
   id: number
   propriedadeId: number
   nome: string
