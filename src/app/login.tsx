@@ -18,6 +18,7 @@ import { BrandHeader } from "@/components/BrandHeader"
 import { FormField } from "@/components/FormField"
 import { loginSchema, LoginForm } from "@/schemas/login.schema"
 import { useSession } from "@/context/SessionContext"
+import { usuarioService } from "@/services/usuarioService"
 import { colors } from "@/constants/Colors"
 
 export default function LoginScreen() {
@@ -35,15 +36,18 @@ export default function LoginScreen() {
     resolver: zodResolver(loginSchema),
   })
 
-  // Autentica o usuário — integrar com API quando endpoint estiver disponível
   async function entrar(data: LoginForm) {
     setLoading(true)
     try {
-      console.log("login:", data.email)
-      setSession({ usuarioId: 1, propriedadeId: 1, nome: "João Batista Ferreira" })
+      const usuario = await usuarioService.login(data.email, data.senha)
+      if (!usuario) {
+        setError("root", { message: "E-mail ou senha incorretos." })
+        return
+      }
+      await setSession({ usuarioId: usuario.id, propriedadeId: usuario.id, nome: usuario.nome })
       router.replace("/(tabs)/home")
     } catch {
-      setError("root", { message: "E-mail ou senha incorretos." })
+      setError("root", { message: "Erro ao autenticar. Tente novamente." })
     } finally {
       setLoading(false)
     }

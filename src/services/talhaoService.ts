@@ -1,10 +1,32 @@
-import api from "./api"
-import { Talhao } from "@/types/talhao"
+import { storage, STORAGE_KEYS } from "@/lib/storage"
+import type { Talhao } from "@/types/talhao"
 
-// Serviço responsável pelo CRUD de talhões
 export const talhaoService = {
-  criar: (data: Omit<Talhao, "id">) => api.post<Talhao>("/talhoes", data),
-  listar: (propriedadeId: number) => api.get<Talhao[]>(`/talhoes/propriedade/${propriedadeId}`),
-  atualizar: (id: number, data: Partial<Talhao>) => api.put<Talhao>(`/talhoes/${id}`, data),
-  deletar: (id: number) => api.delete(`/talhoes/${id}`),
+  criar: async (data: Omit<Talhao, "id">): Promise<Talhao> => {
+    const talhoes = (await storage.get<Talhao[]>(STORAGE_KEYS.TALHOES)) ?? []
+    const novo: Talhao = { ...data, id: Date.now() }
+    await storage.set(STORAGE_KEYS.TALHOES, [...talhoes, novo])
+    return novo
+  },
+
+  listar: async (propriedadeId: number): Promise<Talhao[]> => {
+    const talhoes = (await storage.get<Talhao[]>(STORAGE_KEYS.TALHOES)) ?? []
+    return talhoes.filter((t) => t.propriedadeId === propriedadeId)
+  },
+
+  atualizar: async (id: number, data: Partial<Omit<Talhao, "id">>): Promise<Talhao> => {
+    const talhoes = (await storage.get<Talhao[]>(STORAGE_KEYS.TALHOES)) ?? []
+    const idx = talhoes.findIndex((t) => t.id === id)
+    if (idx === -1) throw new Error("Talhão não encontrado")
+    const atualizado: Talhao = { ...talhoes[idx]!, ...data }
+    const atualizados = [...talhoes]
+    atualizados[idx] = atualizado
+    await storage.set(STORAGE_KEYS.TALHOES, atualizados)
+    return atualizado
+  },
+
+  deletar: async (id: number): Promise<void> => {
+    const talhoes = (await storage.get<Talhao[]>(STORAGE_KEYS.TALHOES)) ?? []
+    await storage.set(STORAGE_KEYS.TALHOES, talhoes.filter((t) => t.id !== id))
+  },
 }

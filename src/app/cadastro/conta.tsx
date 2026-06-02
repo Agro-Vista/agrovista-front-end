@@ -18,7 +18,6 @@ import { BrandHeader } from "@/components/BrandHeader"
 import { FormField } from "@/components/FormField"
 import { signupSchema, SignupForm } from "@/schemas/cadastro.schema"
 import { usuarioService } from "@/services/usuarioService"
-import { propriedadeService } from "@/services/propriedadeService"
 import { useSession } from "@/context/SessionContext"
 import { colors } from "@/constants/Colors"
 import { maskCpf, maskPhone, stripMask } from "@/lib/masks"
@@ -54,32 +53,20 @@ export default function ContaScreen() {
     resolver: zodResolver(signupSchema),
   })
 
-  // Cria usuário e propriedade na API, depois inicia a sessão
   async function criarConta(data: SignupForm) {
     setLoading(true)
     setErroGeral(null)
     try {
-      const resUsuario = await usuarioService.criar({
+      const novoUsuario = await usuarioService.criar({
         nome: data.nome,
         email: data.email,
         senha: data.senha,
         telefone: stripMask(data.telefone),
       })
-      const usuarioId = resUsuario.data.id
-
-      const resPropriedade = await propriedadeService.criar({
-        usuarioId,
-        nomeFazenda: data.nomeFazenda,
-        municipio: data.municipio,
-        estado: data.estado,
-        areaHectares: data.areaHectares,
-      })
-      const propriedadeId = resPropriedade.data.id
-
-      setSession({ usuarioId, propriedadeId, nome: data.nome })
+      await setSession({ usuarioId: novoUsuario.id, propriedadeId: novoUsuario.id, nome: data.nome })
       router.replace("/(tabs)/home")
-    } catch {
-      setErroGeral("Erro ao criar conta. Verifique os dados e tente novamente.")
+    } catch (err) {
+      setErroGeral(err instanceof Error ? err.message : "Erro ao criar conta. Verifique os dados e tente novamente.")
     } finally {
       setLoading(false)
     }
