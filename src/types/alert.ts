@@ -16,3 +16,12 @@ export type Alert = {
   createdAt: string
   description: string
 }
+
+export type AlertItemData = {
+  tipo: AlertType
+  nivel: AlertLevel
+  talhaoNome: string
+  createdAt: string
+  descricao: string
+  label?: string
+}

@@ -9,7 +9,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
-import type { AlertItemData } from "@/components/AlertItem"
+import type { AlertItemData } from "@/types/alert"
 
 const NIVEL_CONFIG = {
   ALTO: {
@@ -90,10 +90,10 @@ export function WeatherAlertCard({ aviso }: Props) {
       >
         {/* Overlay — toque fora fecha */}
         <TouchableWithoutFeedback onPress={() => setModalVisivel(false)}>
-          <View style={{ flex: 1, backgroundColor: "#00000088", justifyContent: "flex-end" }}>
+          <View className="flex-1 justify-end" style={{ backgroundColor: "#00000088" }}>
             {/* Conteúdo — toque dentro não propaga */}
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 }}>
+              <View className="bg-card rounded-t-[24px] px-5 pt-5 pb-10">
 
                 {/* Handle */}
                 <View className="w-10 h-1 rounded-full bg-bordaVisivel self-center mb-5" />

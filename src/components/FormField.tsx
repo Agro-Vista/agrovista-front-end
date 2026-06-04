@@ -9,7 +9,6 @@ type Props = TextInputProps & {
   trailing?: ReactNode
 }
 
-// Campo de formulário padrão com label, estado de foco, hint e mensagem de erro
 export function FormField({
   label,
   error,
@@ -23,14 +22,11 @@ export function FormField({
 
   return (
     <View>
-      <Text
-        className="text-[#999999] uppercase mb-2 tracking-widest"
-        style={{ fontSize: 11 }}
-      >
+      <Text className="text-textoSecundario text-[11px] uppercase mb-2 tracking-widest">
         {label}
       </Text>
       <View
-        className="bg-[#191919] rounded-xl flex-row items-center px-4"
+        className="bg-card rounded-xl flex-row items-center px-4"
         style={{
           borderWidth: 1,
           borderColor: error
@@ -50,21 +46,16 @@ export function FormField({
             onBlur?.(e)
           }}
           placeholderTextColor={colors.textoTerciario}
-          className="flex-1 text-[#f5f5f5]"
-          style={{ fontSize: 16, paddingVertical: 14 }}
+          className="flex-1 text-textoPrimario text-[16px] py-[14px]"
           {...rest}
         />
         {trailing}
       </View>
       {hint && (
-        <Text className="text-[#555555] mt-1" style={{ fontSize: 11 }}>
-          {hint}
-        </Text>
+        <Text className="text-textoTerciario text-[11px] mt-1">{hint}</Text>
       )}
       {error && (
-        <Text className="text-[#ef4444] mt-1" style={{ fontSize: 13 }}>
-          {error}
-        </Text>
+        <Text className="text-vermelho text-[13px] mt-1">{error}</Text>
       )}
     </View>
   )

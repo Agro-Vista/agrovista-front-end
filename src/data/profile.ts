@@ -17,3 +17,9 @@ export const SENHA_FORM_INITIAL = {
   aberto: false, atual: "", nova: "", confirma: "",
   salvando: false, erro: null as string | null, sucesso: false,
 }
+
+export const PREFS_ROWS = [
+  { label: "Alertas via WhatsApp", sub: "Mensagens em tempo real",   key: "alertaWhatsApp" as const },
+  { label: "Alertas via push",     sub: "Notificações no celular",   key: "alertaPush"     as const },
+  { label: "Relatório semanal",    sub: "Resumo toda segunda-feira", key: "relatorioEmail" as const },
+]

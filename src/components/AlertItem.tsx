@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
-import type { AlertType, AlertLevel } from "@/types/alert"
+import type { AlertType, AlertLevel, AlertItemData } from "@/types/alert"
 
 const LEVEL_CFG: Record<AlertLevel, { cor: string; bg: string; icon: keyof typeof Ionicons.glyphMap }> = {
   ALTO:  { cor: colors.vermelho, bg: colors.vermelhoBackground, icon: "flame-outline"   },
@@ -17,15 +17,6 @@ const TYPE_LABEL: Record<AlertType, string> = {
   VENTO_FORTE:    "Vento forte",
 }
 
-export type AlertItemData = {
-  tipo: AlertType
-  nivel: AlertLevel
-  talhaoNome: string
-  createdAt: string
-  descricao: string
-  label?: string
-}
-
 type Props = {
   alerta: AlertItemData
   onPress?: () => void
@@ -38,45 +29,22 @@ export function AlertItem({ alerta, onPress }: Props) {
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      style={{
-        flexDirection: "row",
-        gap: 12,
-        alignItems: "flex-start",
-        backgroundColor: colors.card,
-        borderRadius: 12,
-        padding: 14,
-        marginBottom: 10,
-        borderWidth: 1,
-        borderColor: colors.bordaSutil,
-      }}
+      className="flex-row gap-3 items-start bg-card rounded-xl p-[14px] mb-[10px] border border-bordaSutil"
     >
       <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          backgroundColor: cfg.bg,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        className="w-9 h-9 rounded-[10px] items-center justify-center"
+        style={{ backgroundColor: cfg.bg }}
       >
         <Ionicons name={cfg.icon} size={18} color={cfg.cor} />
       </View>
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 4,
-          }}
-        >
-          <Text style={{ fontSize: 13, fontWeight: "600", color: colors.textoPrimario, flex: 1, marginRight: 8 }}>
+      <View className="flex-1">
+        <View className="flex-row justify-between items-start mb-1">
+          <Text className="text-[13px] font-semibold text-textoPrimario flex-1 mr-2">
             {alerta.label ?? TYPE_LABEL[alerta.tipo]} — {alerta.talhaoNome}
           </Text>
-          <Text style={{ fontSize: 11, color: colors.textoTerciario }}>{alerta.createdAt}</Text>
+          <Text className="text-[11px] text-textoTerciario">{alerta.createdAt}</Text>
         </View>
-        <Text style={{ fontSize: 12, color: colors.textoSecundario, lineHeight: 18 }} numberOfLines={2}>
+        <Text className="text-[12px] text-textoSecundario leading-[18px]" numberOfLines={2}>
           {alerta.descricao}
         </Text>
       </View>

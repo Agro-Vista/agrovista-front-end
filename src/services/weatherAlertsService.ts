@@ -1,26 +1,8 @@
 import { http } from "@/lib/http"
-import type { AlertLevel, AlertType } from "@/types/alert"
-import type { AlertItemData } from "@/components/AlertItem"
+import type { AlertLevel, AlertType, AlertItemData } from "@/types/alert"
+import type { INMETAviso, INMETResponse } from "@/types/inmet"
 
 const INMET_BASE = "https://apiprevmet3.inmet.gov.br"
-
-interface INMETAviso {
-  id: number
-  descricao: string
-  aviso_cor: string
-  id_severidade: number
-  severidade: string
-  estados: string
-  regioes: string
-  mesorregioes: string
-  riscos: string[]
-  inicio: string
-}
-
-interface INMETResponse {
-  hoje: INMETAviso[]
-  futuro: INMETAviso[]
-}
 
 const SIGLAS: Record<string, string> = {
   Acre: "AC", Alagoas: "AL", Amapá: "AP", Amazonas: "AM",

@@ -57,7 +57,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="whatsapp"
+        name="assistente"
         options={{
           title: "Assistente",
           tabBarIcon: ({ color }) => (

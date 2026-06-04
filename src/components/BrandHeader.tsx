@@ -4,7 +4,6 @@ type Props = {
   subtitle?: string
 }
 
-// Cabeçalho de marca reutilizado nas telas de login e cadastro
 export function BrandHeader({ subtitle = "Bem-vindo de volta" }: Props) {
   return (
     <View className="items-center mb-10">
@@ -13,9 +12,7 @@ export function BrandHeader({ subtitle = "Bem-vindo de volta" }: Props) {
         style={{ width: 220, height: 65, marginBottom: 12 }}
         resizeMode="contain"
       />
-      <Text className="text-[#999999]" style={{ fontSize: 13 }}>
-        {subtitle}
-      </Text>
+      <Text className="text-textoSecundario text-[13px]">{subtitle}</Text>
     </View>
   )
 }

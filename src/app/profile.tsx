@@ -21,7 +21,7 @@ import { useSession } from "@/context/SessionContext"
 import { userService } from "@/services/userService"
 import { maskPhone, stripMask } from "@/lib/masks"
 import { usuario } from "@/data/mockData"
-import { EDIT_FORM_INITIAL, PREFS_INITIAL, SENHA_FORM_INITIAL } from "@/data/profile"
+import { EDIT_FORM_INITIAL, PREFS_INITIAL, PREFS_ROWS, SENHA_FORM_INITIAL } from "@/data/profile"
 import type { AntecedenciaOpcao } from "@/data/profile"
 import type { User } from "@/types/user"
 
@@ -370,11 +370,7 @@ export default function PerfilScreen() {
               PREFERÊNCIAS
             </Text>
             <View className="bg-card rounded-2xl border border-bordaSutil mb-3 overflow-hidden">
-              {([
-                { label: "Alertas via WhatsApp", sub: "Mensagens em tempo real",   key: "alertaWhatsApp" as const },
-                { label: "Alertas via push",     sub: "Notificações no celular",   key: "alertaPush"     as const },
-                { label: "Relatório semanal",    sub: "Resumo toda segunda-feira", key: "relatorioEmail" as const },
-              ]).map((item, idx, arr) => (
+              {PREFS_ROWS.map((item, idx, arr) => (
                 <View key={item.label}>
                   <View className="px-4 py-[14px] flex-row items-center justify-between">
                     <View className="flex-1 mr-3">
