@@ -3,23 +3,20 @@ import { View, Text, ScrollView } from "react-native"
 import { colors } from "@/constants/Colors"
 import { PageHeader } from "@/components/PageHeader"
 import { SectionTitle } from "@/components/SectionTitle"
+import { HistoricoEventoCard } from "@/components/HistoricoEventoCard"
 import { useSession } from "@/context/SessionContext"
-import {
-  ALERTAS_EMITIDOS,
-  EVENTOS,
-  PERIODO_DIAS,
-  RESULTADO_CFG,
-  TAXA_ACERTO,
-} from "@/data/history"
+import { useHistorico } from "@/context/HistoricoContext"
+import { PERIODO_DIAS } from "@/data/history"
 import { dashboard, usuario } from "@/data/mockData"
 
 export default function HistoricoScreen() {
   const { session } = useSession()
+  const { eventos, taxaAcerto, alertasEmitidos } = useHistorico()
 
-  const correto  = EVENTOS.filter((e) => e.resultado === "CORRETO").length
-  const parcial  = EVENTOS.filter((e) => e.resultado === "PARCIAL").length
-  const incorreto = EVENTOS.filter((e) => e.resultado === "INCORRETO").length
-  const total = EVENTOS.length
+  const correto   = eventos.filter((e) => e.resultado === "CORRETO").length
+  const parcial   = eventos.filter((e) => e.resultado === "PARCIAL").length
+  const incorreto = eventos.filter((e) => e.resultado === "INCORRETO").length
+  const total = eventos.length
 
   return (
     <View className="flex-1 bg-bg">
@@ -49,7 +46,7 @@ export default function HistoricoScreen() {
               Alertas emitidos
             </Text>
             <Text className="text-[36px] font-bold text-textoPrimario leading-none">
-              {ALERTAS_EMITIDOS}
+              {alertasEmitidos}
             </Text>
             <Text className="text-[12px] text-textoTerciario mt-2">
               últimos {PERIODO_DIAS} dias
@@ -62,7 +59,7 @@ export default function HistoricoScreen() {
             </Text>
             <View className="flex-row items-end">
               <Text className="text-[36px] font-bold text-verde leading-none">
-                {TAXA_ACERTO}
+                {taxaAcerto}
               </Text>
               <Text className="text-[18px] font-bold text-verde mb-[4px] ml-[2px]">
                 %
@@ -129,52 +126,9 @@ export default function HistoricoScreen() {
         <SectionTitle>EVENTOS VALIDADOS</SectionTitle>
 
         <View className="gap-[8px]">
-          {EVENTOS.map((evento) => {
-            const cfg = RESULTADO_CFG[evento.resultado]
-            return (
-              <View
-                key={evento.id}
-                className="bg-card rounded-2xl border border-bordaSutil p-4"
-              >
-                <View className="flex-row items-center gap-[10px] mb-[6px]">
-                  <View
-                    className="w-[8px] h-[8px] rounded-full shrink-0"
-                    style={{ backgroundColor: cfg.cor }}
-                  />
-                  <Text
-                    className="flex-1 text-[14px] font-bold text-textoPrimario"
-                    numberOfLines={1}
-                  >
-                    {evento.titulo}{" "}
-                    <Text className="font-normal text-textoSecundario">
-                      — {evento.talhaoNome}
-                    </Text>
-                  </Text>
-                  <Text className="text-[12px] text-textoSecundario mr-1">
-                    {evento.data}
-                  </Text>
-                  <View
-                    className="rounded-full border px-[10px] py-[4px]"
-                    style={{ backgroundColor: cfg.bg, borderColor: cfg.cor + "50" }}
-                  >
-                    <Text
-                      className="text-[12px] font-semibold"
-                      style={{ color: cfg.cor }}
-                    >
-                      {cfg.label}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text
-                  className="text-[12px] text-textoSecundario"
-                  style={{ paddingLeft: 18 }}
-                >
-                  {evento.descricao}
-                </Text>
-              </View>
-            )
-          })}
+          {eventos.map((evento) => (
+            <HistoricoEventoCard key={evento.id} evento={evento} />
+          ))}
         </View>
       </ScrollView>
     </View>

@@ -8,3 +8,11 @@ export type EventoHistorico = {
   resultado: ResultadoEvento
   descricao: string
 }
+
+export type EventoPendente = {
+  id: number
+  titulo: string
+  talhaoNome: string
+  data: string
+  descricao: string
+}

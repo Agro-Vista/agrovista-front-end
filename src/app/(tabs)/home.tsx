@@ -13,16 +13,27 @@ import { ABAS, MARCADORES, type Aba } from "@/data/home"
 import { StatCard } from "@/components/StatCard"
 import { PageHeader } from "@/components/PageHeader"
 import type { AlertItemData } from "@/types/alert"
+import type { EventoPendente } from "@/types/history"
 import { WeatherAlertCard } from "@/components/WeatherAlertCard"
+import { ValidacaoModal } from "@/components/ValidacaoModal"
 import { getWeatherAlerts } from "@/services/weatherAlertsService"
 import { useSession } from "@/context/SessionContext"
+import { useHistorico } from "@/context/HistoricoContext"
 
 export default function HomeScreen() {
   const { session } = useSession()
+  const { pendentes, validar } = useHistorico()
+  const [eventoParaValidar, setEventoParaValidar] = useState<EventoPendente | null>(null)
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Mapa")
   const [avisosAPI, setAvisosAPI] = useState<AlertItemData[]>([])
   const [loadingAvisos, setLoadingAvisos] = useState(false)
   const [erroAvisos, setErroAvisos] = useState(false)
+
+  const handleValidar = (id: number, resultado: Parameters<typeof validar>[1]) => {
+    validar(id, resultado)
+    const proximo = pendentes.find((p) => p.id !== id)
+    setEventoParaValidar(proximo ?? null)
+  }
 
   useEffect(() => {
     void fetchAvisos()
@@ -103,7 +114,7 @@ export default function HomeScreen() {
                   }}
                 />
               ))}
-              {["20%", "40%", "60%", "80%"].map((x) => (
+              {(["20%", "40%", "60%", "80%"] as `${number}%`[]).map((x) => (
                 <View
                   key={x}
                   style={{
@@ -174,6 +185,34 @@ export default function HomeScreen() {
                 sub={dashboard.fonteDados}
               />
             </View>
+
+            {/* Pendentes para validar */}
+            {pendentes.length > 0 && (
+              <TouchableOpacity
+                className="mx-4 mt-3 rounded-2xl border flex-row items-center gap-3 p-4"
+                style={{ backgroundColor: colors.ambarBackground, borderColor: colors.ambar + "50" }}
+                onPress={() => setEventoParaValidar(pendentes[0])}
+                activeOpacity={0.7}
+              >
+                <View
+                  className="w-9 h-9 rounded-[10px] items-center justify-center"
+                  style={{ backgroundColor: colors.ambar + "30" }}
+                >
+                  <Ionicons name="time-outline" size={18} color={colors.ambar} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[13px] font-semibold text-textoPrimario">
+                    {pendentes.length === 1
+                      ? "1 alerta aguarda sua validação"
+                      : `${pendentes.length} alertas aguardam validação`}
+                  </Text>
+                  <Text className="text-[11px] text-textoSecundario mt-[2px]">
+                    Seu feedback melhora a precisão da IA
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.ambar} />
+              </TouchableOpacity>
+            )}
 
             {/* Alertas recentes */}
             <View className="mx-4 mt-[22px]">
@@ -281,6 +320,12 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
+
+      <ValidacaoModal
+        evento={eventoParaValidar}
+        onValidar={handleValidar}
+        onClose={() => setEventoParaValidar(null)}
+      />
     </View>
   )
 }
