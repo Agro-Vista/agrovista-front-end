@@ -1,54 +1,20 @@
 import { View, Text, TouchableOpacity, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { colors } from "@/constants/Colors"
 import type { EventoPendente, ResultadoEvento } from "@/types/history"
+import { VALIDATION_OPTIONS } from "@/data/validation"
 
 type Props = {
-  evento: EventoPendente | null
-  onValidar: (id: number, resultado: ResultadoEvento) => void
+  event: EventoPendente | null
+  onValidate: (id: number, result: ResultadoEvento) => void
   onClose: () => void
 }
 
-const OPCOES: {
-  resultado: ResultadoEvento
-  label: string
-  sub: string
-  icon: keyof typeof Ionicons.glyphMap
-  cor: string
-  bg: string
-}[] = [
-  {
-    resultado: "CORRETO",
-    label: "Correto",
-    sub: "O alerta se confirmou como previsto",
-    icon: "checkmark-circle-outline",
-    cor: colors.verde,
-    bg: colors.verdeBackground,
-  },
-  {
-    resultado: "PARCIAL",
-    label: "Parcial",
-    sub: "Aconteceu, mas de forma diferente",
-    icon: "remove-circle-outline",
-    cor: colors.ambar,
-    bg: colors.ambarBackground,
-  },
-  {
-    resultado: "INCORRETO",
-    label: "Incorreto",
-    sub: "O evento não ocorreu na fazenda",
-    icon: "close-circle-outline",
-    cor: colors.vermelho,
-    bg: colors.vermelhoBackground,
-  },
-]
-
-export function ValidacaoModal({ evento, onValidar, onClose }: Props) {
+export function ModalValidation({ event, onValidate, onClose }: Props) {
   return (
     <Modal
       transparent
       animationType="slide"
-      visible={!!evento}
+      visible={!!event}
       onRequestClose={onClose}
     >
       <TouchableOpacity
@@ -65,13 +31,13 @@ export function ValidacaoModal({ evento, onValidar, onClose }: Props) {
               VALIDAR ALERTA
             </Text>
             <Text className="text-[20px] font-bold text-textoPrimario mb-1">
-              {evento?.titulo}
+              {event?.titulo}
             </Text>
             <Text className="text-[13px] text-textoSecundario mb-1">
-              {evento?.talhaoNome} · {evento?.data}
+              {event?.talhaoNome} · {event?.data}
             </Text>
             <Text className="text-[13px] text-textoSecundario leading-5 mb-6">
-              {evento?.descricao}
+              {event?.descricao}
             </Text>
 
             <Text className="text-[12px] text-textoTerciario mb-3">
@@ -79,20 +45,22 @@ export function ValidacaoModal({ evento, onValidar, onClose }: Props) {
             </Text>
 
             <View className="gap-3">
-              {OPCOES.map((op) => (
+              {VALIDATION_OPTIONS.map((option) => (
                 <TouchableOpacity
-                  key={op.resultado}
-                  onPress={() => evento && onValidar(evento.id, op.resultado)}
+                  key={option.result}
+                  onPress={() => event && onValidate(event.id, option.result)}
                   className="flex-row items-center gap-3 rounded-xl p-4 border"
-                  style={{ backgroundColor: op.bg, borderColor: op.cor + "40" }}
+                  style={{ backgroundColor: option.background, borderColor: option.color + "40" }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={op.icon} size={22} color={op.cor} />
+                  <Ionicons name={option.icon} size={22} color={option.color} />
                   <View className="flex-1">
-                    <Text className="text-[15px] font-semibold" style={{ color: op.cor }}>
-                      {op.label}
+                    <Text className="text-[15px] font-semibold" style={{ color: option.color }}>
+                      {option.label}
                     </Text>
-                    <Text className="text-[12px] text-textoTerciario mt-[2px]">{op.sub}</Text>
+                    <Text className="text-[12px] text-textoTerciario mt-[2px]">
+                      {option.subtitle}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}

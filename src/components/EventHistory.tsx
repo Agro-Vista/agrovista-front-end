@@ -12,57 +12,57 @@ import { colors } from "@/constants/Colors"
 import type { EventoHistorico } from "@/types/history"
 import { RESULTADO_CFG } from "@/data/history"
 
-type Props = { evento: EventoHistorico }
+type Props = { event: EventoHistorico }
 
-export function HistoricoEventoCard({ evento }: Props) {
-  const [modalVisivel, setModalVisivel] = useState(false)
-  const cfg = RESULTADO_CFG[evento.resultado]
+export function EventHistory({ event }: Props) {
+  const [modalVisible, setModalVisible] = useState(false)
+  const config = RESULTADO_CFG[event.resultado]
 
   return (
     <>
       {/* ─── Card ─── */}
       <TouchableOpacity
-        onPress={() => setModalVisivel(true)}
+        onPress={() => setModalVisible(true)}
         activeOpacity={0.7}
         className="bg-card rounded-2xl border border-bordaSutil p-4"
       >
         <View className="flex-row items-center gap-[10px] mb-[6px]">
           <View
             className="w-[8px] h-[8px] rounded-full shrink-0"
-            style={{ backgroundColor: cfg.cor }}
+            style={{ backgroundColor: config.cor }}
           />
           <Text
             className="flex-1 text-[14px] font-bold text-textoPrimario"
             numberOfLines={1}
           >
-            {evento.titulo}{" "}
+            {event.titulo}{" "}
             <Text className="font-normal text-textoSecundario">
-              — {evento.talhaoNome}
+              — {event.talhaoNome}
             </Text>
           </Text>
-          <Text className="text-[12px] text-textoSecundario mr-1">{evento.data}</Text>
+          <Text className="text-[12px] text-textoSecundario mr-1">{event.data}</Text>
           <View
             className="rounded-full border px-[10px] py-[4px]"
-            style={{ backgroundColor: cfg.bg, borderColor: cfg.cor + "50" }}
+            style={{ backgroundColor: config.bg, borderColor: config.cor + "50" }}
           >
-            <Text className="text-[12px] font-semibold" style={{ color: cfg.cor }}>
-              {cfg.label}
+            <Text className="text-[12px] font-semibold" style={{ color: config.cor }}>
+              {config.label}
             </Text>
           </View>
         </View>
         <Text className="text-[12px] text-textoSecundario" style={{ paddingLeft: 18 }}>
-          {evento.descricao}
+          {event.descricao}
         </Text>
       </TouchableOpacity>
 
       {/* ─── Modal ─── */}
       <Modal
-        visible={modalVisivel}
+        visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalVisivel(false)}
+        onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setModalVisivel(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
           <View className="flex-1 justify-end" style={{ backgroundColor: "#00000088" }}>
             <TouchableWithoutFeedback onPress={() => {}}>
               <View className="bg-card rounded-t-[24px] px-5 pt-5 pb-10">
@@ -76,18 +76,18 @@ export function HistoricoEventoCard({ evento }: Props) {
                     <View className="flex-row items-center gap-2 mb-1">
                       <View
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: cfg.cor }}
+                        style={{ backgroundColor: config.cor }}
                       />
                       <Text className="text-[11px] font-semibold tracking-widest text-textoTerciario">
                         EVENTO VALIDADO
                       </Text>
                     </View>
                     <Text className="text-[20px] font-bold text-textoPrimario leading-[26px]">
-                      {evento.titulo}
+                      {event.titulo}
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setModalVisivel(false)}
+                    onPress={() => setModalVisible(false)}
                     className="w-8 h-8 rounded-full bg-bordaSutil items-center justify-center"
                   >
                     <Ionicons name="close" size={16} color={colors.textoSecundario} />
@@ -97,11 +97,11 @@ export function HistoricoEventoCard({ evento }: Props) {
                 {/* Badge de resultado */}
                 <View
                   className="self-start flex-row items-center gap-2 rounded-lg px-3 py-2 mb-5"
-                  style={{ backgroundColor: cfg.bg }}
+                  style={{ backgroundColor: config.bg }}
                 >
-                  <Ionicons name={cfg.icon} size={16} color={cfg.cor} />
-                  <Text className="text-[13px] font-semibold" style={{ color: cfg.cor }}>
-                    {cfg.label}
+                  <Ionicons name={config.icon} size={16} color={config.cor} />
+                  <Text className="text-[13px] font-semibold" style={{ color: config.cor }}>
+                    {config.label}
                   </Text>
                 </View>
 
@@ -113,7 +113,7 @@ export function HistoricoEventoCard({ evento }: Props) {
                     </Text>
                     <View className="flex-row items-center gap-2">
                       <Ionicons name="location-outline" size={15} color={colors.textoSecundario} />
-                      <Text className="text-[14px] text-textoPrimario">{evento.talhaoNome}</Text>
+                      <Text className="text-[14px] text-textoPrimario">{event.talhaoNome}</Text>
                     </View>
                   </View>
 
@@ -124,7 +124,7 @@ export function HistoricoEventoCard({ evento }: Props) {
                     </Text>
                     <View className="flex-row items-center gap-2">
                       <Ionicons name="calendar-outline" size={15} color={colors.textoSecundario} />
-                      <Text className="text-[14px] text-textoPrimario">{evento.data}</Text>
+                      <Text className="text-[14px] text-textoPrimario">{event.data}</Text>
                     </View>
                   </View>
 
@@ -137,7 +137,7 @@ export function HistoricoEventoCard({ evento }: Props) {
                       O QUE ACONTECEU
                     </Text>
                     <Text className="text-[13px] text-textoSecundario leading-5">
-                      {evento.descricao}
+                      {event.descricao}
                     </Text>
                   </View>
                 </ScrollView>

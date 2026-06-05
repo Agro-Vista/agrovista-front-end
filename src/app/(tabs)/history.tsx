@@ -3,20 +3,20 @@ import { View, Text, ScrollView } from "react-native"
 import { colors } from "@/constants/Colors"
 import { PageHeader } from "@/components/PageHeader"
 import { SectionTitle } from "@/components/SectionTitle"
-import { HistoricoEventoCard } from "@/components/HistoricoEventoCard"
+import { EventHistory } from "@/components/EventHistory"
 import { useSession } from "@/context/SessionContext"
-import { useHistorico } from "@/context/HistoricoContext"
+import { useHistory } from "@/context/HistoricoContext"
 import { PERIODO_DIAS } from "@/data/history"
 import { dashboard, usuario } from "@/data/mockData"
 
 export default function HistoricoScreen() {
   const { session } = useSession()
-  const { eventos, taxaAcerto, alertasEmitidos } = useHistorico()
+  const { events, successRate, emittedAlerts } = useHistory()
 
-  const correto   = eventos.filter((e) => e.resultado === "CORRETO").length
-  const parcial   = eventos.filter((e) => e.resultado === "PARCIAL").length
-  const incorreto = eventos.filter((e) => e.resultado === "INCORRETO").length
-  const total = eventos.length
+  const correct   = events.filter((e) => e.resultado === "CORRETO").length
+  const partial   = events.filter((e) => e.resultado === "PARCIAL").length
+  const incorrect = events.filter((e) => e.resultado === "INCORRETO").length
+  const total = events.length
 
   return (
     <View className="flex-1 bg-bg">
@@ -46,7 +46,7 @@ export default function HistoricoScreen() {
               Alertas emitidos
             </Text>
             <Text className="text-[36px] font-bold text-textoPrimario leading-none">
-              {alertasEmitidos}
+              {emittedAlerts}
             </Text>
             <Text className="text-[12px] text-textoTerciario mt-2">
               últimos {PERIODO_DIAS} dias
@@ -59,7 +59,7 @@ export default function HistoricoScreen() {
             </Text>
             <View className="flex-row items-end">
               <Text className="text-[36px] font-bold text-verde leading-none">
-                {taxaAcerto}
+                {successRate}
               </Text>
               <Text className="text-[18px] font-bold text-verde mb-[4px] ml-[2px]">
                 %
@@ -88,20 +88,20 @@ export default function HistoricoScreen() {
             className="rounded-full overflow-hidden mb-3"
             style={{ height: 8, flexDirection: "row" }}
           >
-            {correto > 0 && (
-              <View style={{ flex: correto, backgroundColor: colors.verde }} />
+            {correct > 0 && (
+              <View style={{ flex: correct, backgroundColor: colors.verde }} />
             )}
-            {correto > 0 && parcial + incorreto > 0 && (
+            {correct > 0 && partial + incorrect > 0 && (
               <View style={{ width: 2, backgroundColor: colors.bg }} />
             )}
-            {parcial > 0 && (
-              <View style={{ flex: parcial, backgroundColor: colors.ambar }} />
+            {partial > 0 && (
+              <View style={{ flex: partial, backgroundColor: colors.ambar }} />
             )}
-            {parcial > 0 && incorreto > 0 && (
+            {partial > 0 && incorrect > 0 && (
               <View style={{ width: 2, backgroundColor: colors.bg }} />
             )}
-            {incorreto > 0 && (
-              <View style={{ flex: incorreto, backgroundColor: colors.vermelho }} />
+            {incorrect > 0 && (
+              <View style={{ flex: incorrect, backgroundColor: colors.vermelho }} />
             )}
           </View>
 
@@ -109,15 +109,15 @@ export default function HistoricoScreen() {
           <View className="flex-row gap-4">
             <View className="flex-row items-center gap-[6px]">
               <View className="w-[7px] h-[7px] rounded-full bg-verde" />
-              <Text className="text-[12px] text-textoSecundario">Correto {correto}</Text>
+              <Text className="text-[12px] text-textoSecundario">Correto {correct}</Text>
             </View>
             <View className="flex-row items-center gap-[6px]">
               <View className="w-[7px] h-[7px] rounded-full bg-ambar" />
-              <Text className="text-[12px] text-textoSecundario">Parcial {parcial}</Text>
+              <Text className="text-[12px] text-textoSecundario">Parcial {partial}</Text>
             </View>
             <View className="flex-row items-center gap-[6px]">
               <View className="w-[7px] h-[7px] rounded-full bg-vermelho" />
-              <Text className="text-[12px] text-textoSecundario">Incorreto {incorreto}</Text>
+              <Text className="text-[12px] text-textoSecundario">Incorreto {incorrect}</Text>
             </View>
           </View>
         </View>
@@ -126,8 +126,8 @@ export default function HistoricoScreen() {
         <SectionTitle>EVENTOS VALIDADOS</SectionTitle>
 
         <View className="gap-[8px]">
-          {eventos.map((evento) => (
-            <HistoricoEventoCard key={evento.id} evento={evento} />
+          {events.map((event) => (
+            <EventHistory key={event.id} event={event} />
           ))}
         </View>
       </ScrollView>

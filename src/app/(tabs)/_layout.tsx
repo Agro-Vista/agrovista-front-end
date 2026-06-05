@@ -57,18 +57,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="assistente"
+        name="assistant"
         options={{
           title: "Assistente",
           tabBarIcon: ({ color }) => (
             <Ionicons name="chatbubbles-outline" size={22} color={color} />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="plans"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

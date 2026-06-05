@@ -10,88 +10,58 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "@/constants/Colors"
 import type { AlertItemData } from "@/types/alert"
-
-const NIVEL_CONFIG = {
-  ALTO: {
-    cor: colors.vermelho,
-    bg: colors.vermelhoBackground,
-    label: "Perigo",
-    icon: "flame-outline" as const,
-  },
-  MEDIO: {
-    cor: colors.ambar,
-    bg: colors.ambarBackground,
-    label: "Atenção",
-    icon: "warning-outline" as const,
-  },
-  BAIXO: {
-    cor: colors.verde,
-    bg: colors.verdeBackground,
-    label: "Informativo",
-    icon: "information-circle-outline" as const,
-  },
-}
-
-const TIPO_LABEL: Record<string, string> = {
-  RISCO_HIDRICO: "Risco Hídrico",
-  FRENTE_FRIA: "Frente Fria",
-  JANELA_PLANTIO: "Janela de Plantio",
-  GEADA: "Geada",
-  VENTO_FORTE: "Vento Forte",
-}
+import { LEVEL_CONFIG, TYPE_LABELS } from "@/data/alerts"
 
 type Props = {
-  aviso: AlertItemData
+  alert: AlertItemData
 }
 
-export function WeatherAlertCard({ aviso }: Props) {
-  const [modalVisivel, setModalVisivel] = useState(false)
-  const cfg = NIVEL_CONFIG[aviso.nivel]
+export function WeatherAlertCard({ alert }: Props) {
+  const [modalVisible, setModalVisible] = useState(false)
+  const config = LEVEL_CONFIG[alert.nivel]
 
   return (
     <>
       {/* ─── Card ─── */}
       <TouchableOpacity
-        onPress={() => setModalVisivel(true)}
+        onPress={() => setModalVisible(true)}
         activeOpacity={0.7}
         className="flex-row bg-card rounded-xl mb-3 overflow-hidden border border-bordaSutil"
       >
-        <View className="w-1" style={{ backgroundColor: cfg.cor }} />
+        <View className="w-1" style={{ backgroundColor: config.color }} />
         <View className="flex-1 p-3 gap-[6px]">
           <View className="flex-row items-center justify-between">
             <Text className="text-[13px] font-bold text-textoPrimario flex-1 mr-2" numberOfLines={1}>
-              {aviso.label ?? aviso.talhaoNome}
+              {alert.label ?? alert.talhaoNome}
             </Text>
-            <Text className="text-[11px] text-textoTerciario">{aviso.createdAt}</Text>
+            <Text className="text-[11px] text-textoTerciario">{alert.createdAt}</Text>
           </View>
           <View className="flex-row items-center gap-2">
             <Ionicons name="location-outline" size={11} color={colors.textoTerciario} />
             <Text className="text-[11px] text-textoSecundario flex-1" numberOfLines={1}>
-              {aviso.talhaoNome}
+              {alert.talhaoNome}
             </Text>
-            <View className="rounded px-[6px] py-[2px]" style={{ backgroundColor: cfg.bg }}>
-              <Text className="text-[10px] font-semibold" style={{ color: cfg.cor }}>
-                {cfg.label}
+            <View className="rounded px-[6px] py-[2px]" style={{ backgroundColor: config.background }}>
+              <Text className="text-[10px] font-semibold" style={{ color: config.color }}>
+                {config.label}
               </Text>
             </View>
           </View>
           <Text className="text-[12px] text-textoSecundario leading-[18px]" numberOfLines={2}>
-            {aviso.descricao}
+            {alert.descricao}
           </Text>
         </View>
       </TouchableOpacity>
 
       {/* ─── Modal ─── */}
       <Modal
-        visible={modalVisivel}
+        visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalVisivel(false)}
+        onRequestClose={() => setModalVisible(false)}
       >
-        {/* Overlay — toque fora fecha */}
-        <TouchableWithoutFeedback onPress={() => setModalVisivel(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
           <View className="flex-1 justify-end" style={{ backgroundColor: "#00000088" }}>
-            {/* Conteúdo — toque dentro não propaga */}
             <TouchableWithoutFeedback onPress={() => {}}>
               <View className="bg-card rounded-t-[24px] px-5 pt-5 pb-10">
 
@@ -102,17 +72,17 @@ export function WeatherAlertCard({ aviso }: Props) {
                 <View className="flex-row items-start justify-between mb-4">
                   <View className="flex-1 mr-3">
                     <View className="flex-row items-center gap-2 mb-1">
-                      <View className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.cor }} />
+                      <View className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
                       <Text className="text-[11px] font-semibold tracking-widest text-textoTerciario">
                         AVISO INMET
                       </Text>
                     </View>
                     <Text className="text-[20px] font-bold text-textoPrimario leading-[26px]">
-                      {aviso.label ?? aviso.talhaoNome}
+                      {alert.label ?? alert.talhaoNome}
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setModalVisivel(false)}
+                    onPress={() => setModalVisible(false)}
                     className="w-8 h-8 rounded-full bg-bordaSutil items-center justify-center"
                   >
                     <Ionicons name="close" size={16} color={colors.textoSecundario} />
@@ -122,11 +92,11 @@ export function WeatherAlertCard({ aviso }: Props) {
                 {/* Badge de severidade */}
                 <View
                   className="self-start flex-row items-center gap-2 rounded-lg px-3 py-2 mb-5"
-                  style={{ backgroundColor: cfg.bg }}
+                  style={{ backgroundColor: config.background }}
                 >
-                  <Ionicons name={cfg.icon} size={16} color={cfg.cor} />
-                  <Text className="text-[13px] font-semibold" style={{ color: cfg.cor }}>
-                    {cfg.label}
+                  <Ionicons name={config.icon} size={16} color={config.color} />
+                  <Text className="text-[13px] font-semibold" style={{ color: config.color }}>
+                    {config.label}
                   </Text>
                 </View>
 
@@ -138,7 +108,7 @@ export function WeatherAlertCard({ aviso }: Props) {
                     </Text>
                     <View className="flex-row items-center gap-2">
                       <Ionicons name="map-outline" size={15} color={colors.textoSecundario} />
-                      <Text className="text-[14px] text-textoPrimario">{aviso.talhaoNome}</Text>
+                      <Text className="text-[14px] text-textoPrimario">{alert.talhaoNome}</Text>
                     </View>
                   </View>
 
@@ -149,7 +119,7 @@ export function WeatherAlertCard({ aviso }: Props) {
                     </Text>
                     <View className="flex-row items-center gap-2">
                       <Ionicons name="time-outline" size={15} color={colors.textoSecundario} />
-                      <Text className="text-[14px] text-textoPrimario">{aviso.createdAt}</Text>
+                      <Text className="text-[14px] text-textoPrimario">{alert.createdAt}</Text>
                     </View>
                   </View>
 
@@ -161,7 +131,7 @@ export function WeatherAlertCard({ aviso }: Props) {
                     <View className="flex-row items-center gap-2">
                       <Ionicons name="layers-outline" size={15} color={colors.textoSecundario} />
                       <Text className="text-[14px] text-textoPrimario">
-                        {TIPO_LABEL[aviso.tipo] ?? aviso.tipo}
+                        {TYPE_LABELS[alert.tipo] ?? alert.tipo}
                       </Text>
                     </View>
                   </View>
@@ -172,7 +142,7 @@ export function WeatherAlertCard({ aviso }: Props) {
                       RISCOS ASSOCIADOS
                     </Text>
                     <Text className="text-[13px] text-textoSecundario leading-5">
-                      {aviso.descricao}
+                      {alert.descricao}
                     </Text>
                   </View>
 

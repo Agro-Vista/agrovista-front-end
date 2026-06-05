@@ -7,7 +7,7 @@ import "react-native-reanimated"
 import "../../global.css"
 
 import { SessionProvider } from "@/context/SessionContext"
-import { HistoricoProvider } from "@/context/HistoricoContext"
+import { HistoryProvider } from "@/context/HistoricoContext"
 
 export { ErrorBoundary } from "expo-router"
 
@@ -34,7 +34,7 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
-      <HistoricoProvider>
+      <HistoryProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
@@ -44,7 +44,7 @@ export default function RootLayout() {
         <Stack.Screen name="plan-selection" />
       </Stack>
       <StatusBar style="light" />
-      </HistoricoProvider>
+      </HistoryProvider>
     </SessionProvider>
   )
 }

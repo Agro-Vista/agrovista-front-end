@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import type { ResultadoEvento, EventoHistorico, EventoPendente } from "@/types/history"
 import {
   ALERTAS_EMITIDOS,
@@ -7,51 +8,66 @@ import {
   TAXA_ACERTO,
 } from "@/data/history"
 
-type HistoricoContextData = {
-  pendentes: EventoPendente[]
-  eventos: EventoHistorico[]
-  taxaAcerto: number
-  alertasEmitidos: number
-  validar: (id: number, resultado: ResultadoEvento) => void
+const STORAGE_KEY = "agrovista_validated_ids"
+
+type HistoryContextData = {
+  pending: EventoPendente[]
+  events: EventoHistorico[]
+  successRate: number
+  emittedAlerts: number
+  validate: (id: number, result: ResultadoEvento) => void
 }
 
-const HistoricoContext = createContext<HistoricoContextData>({} as HistoricoContextData)
+const HistoryContext = createContext<HistoryContextData>({} as HistoryContextData)
 
-export function HistoricoProvider({ children }: { children: React.ReactNode }) {
-  const [pendentes, setPendentes] = useState<EventoPendente[]>(EVENTOS_PENDENTES_MOCK)
-  const [eventos, setEventos] = useState<EventoHistorico[]>(EVENTOS)
-  const [taxaAcerto, setTaxaAcerto] = useState(TAXA_ACERTO)
-  const [alertasEmitidos, setAlertasEmitidos] = useState(ALERTAS_EMITIDOS)
+export function HistoryProvider({ children }: { children: React.ReactNode }) {
+  const [pending, setPending] = useState<EventoPendente[]>(EVENTOS_PENDENTES_MOCK)
+  const [events, setEvents] = useState<EventoHistorico[]>(EVENTOS)
+  const [successRate, setSuccessRate] = useState(TAXA_ACERTO)
+  const [emittedAlerts, setEmittedAlerts] = useState(ALERTAS_EMITIDOS)
 
-  const validar = (id: number, resultado: ResultadoEvento) => {
-    const pendente = pendentes.find((p) => p.id === id)
-    if (!pendente) return
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+      if (!raw) return
+      const validatedIds: number[] = JSON.parse(raw)
+      setPending((prev) => prev.filter((p) => !validatedIds.includes(p.id)))
+    })
+  }, [])
 
-    const novoEvento: EventoHistorico = {
+  const validate = (id: number, result: ResultadoEvento) => {
+    const item = pending.find((p) => p.id === id)
+    if (!item) return
+
+    const newEvent: EventoHistorico = {
       id,
-      titulo: pendente.titulo,
-      talhaoNome: pendente.talhaoNome,
-      data: pendente.data,
-      resultado,
-      descricao: "Validado por você.",
+      titulo: item.titulo,
+      talhaoNome: item.talhaoNome,
+      data: item.data,
+      resultado: result,
+      descricao: item.descricao,
     }
 
-    setPendentes((prev) => prev.filter((p) => p.id !== id))
-    setEventos((prev) => {
-      const todos = [novoEvento, ...prev]
-      const corretos = todos.filter((e) => e.resultado === "CORRETO").length
-      const parciais = todos.filter((e) => e.resultado === "PARCIAL").length
-      setTaxaAcerto(Math.round(((corretos + parciais * 0.5) / todos.length) * 100))
-      return todos
+    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+      const existing: number[] = raw ? JSON.parse(raw) : []
+      void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...existing, id]))
     })
-    setAlertasEmitidos((prev) => prev + 1)
+
+    setPending((prev) => prev.filter((p) => p.id !== id))
+    setEvents((prev) => {
+      const all = [newEvent, ...prev]
+      const correct = all.filter((e) => e.resultado === "CORRETO").length
+      const partial = all.filter((e) => e.resultado === "PARCIAL").length
+      setSuccessRate(Math.round(((correct + partial * 0.5) / all.length) * 100))
+      return all
+    })
+    setEmittedAlerts((prev) => prev + 1)
   }
 
   return (
-    <HistoricoContext.Provider value={{ pendentes, eventos, taxaAcerto, alertasEmitidos, validar }}>
+    <HistoryContext.Provider value={{ pending, events, successRate, emittedAlerts, validate }}>
       {children}
-    </HistoricoContext.Provider>
+    </HistoryContext.Provider>
   )
 }
 
-export const useHistorico = () => useContext(HistoricoContext)
+export const useHistory = () => useContext(HistoryContext)

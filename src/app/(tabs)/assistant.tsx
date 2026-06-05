@@ -13,24 +13,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { colors } from "@/constants/Colors"
 import { conversa, usuario } from "@/data/mockData"
-import { SUGESTOES } from "@/data/assistente"
-import { horaAgora, gerarResposta } from "@/lib/assistente"
+import { SUGESTOES } from "@/data/assistant"
+import { horaAgora, gerarResposta } from "@/lib/assistant"
 import type { MsgTexto, Mensagem } from "@/types/message"
 import { useSession } from "@/context/SessionContext"
 
-export default function AssistenteScreen() {
+export default function AssistantScreen() {
   const { session } = useSession()
   const insets = useSafeAreaInsets()
   const scrollRef = useRef<ScrollView>(null)
   const inputRef = useRef<TextInput>(null)
-  const proximoId = useRef(conversa.length + 1)
+  const nextId = useRef(conversa.length + 1)
 
-  const [texto, setTexto] = useState("")
-  const [digitando, setDigitando] = useState(false)
+  const [inputText, setInputText] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
 
-  const primeiroNome = (session.nome || usuario.nome).split(" ")[0]
+  const firstName = (session.nome || usuario.nome).split(" ")[0]
 
-  const [mensagens, setMensagens] = useState<Mensagem[]>(() =>
+  const [messages, setMessages] = useState<Mensagem[]>(() =>
     conversa.map((m): Mensagem => {
       if (m.tipo === "arquivo") {
         return { id: m.id, tipo: "arquivo", nome: m.nome, subtexto: m.subtexto, hora: m.hora }
@@ -38,7 +38,7 @@ export default function AssistenteScreen() {
       return {
         id: m.id,
         tipo: m.tipo as "recv" | "send",
-        texto: m.tipo === "recv" ? m.texto.replace(/João/g, primeiroNome) : m.texto,
+        texto: m.tipo === "recv" ? m.texto.replace(/João/g, firstName) : m.texto,
         hora: m.hora,
       }
     })
@@ -48,40 +48,40 @@ export default function AssistenteScreen() {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 80)
   }, [])
 
-  function scrollFim(animado = true) {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: animado }), 50)
+  function scrollToEnd(animated = true) {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated }), 50)
   }
 
-  async function enviar(textoEnviado?: string) {
-    const msg = (textoEnviado ?? texto).trim()
-    if (!msg || digitando) return
+  async function send(textOverride?: string) {
+    const msg = (textOverride ?? inputText).trim()
+    if (!msg || isTyping) return
 
-    setTexto("")
+    setInputText("")
     inputRef.current?.focus()
 
-    const enviada: MsgTexto = { id: proximoId.current++, tipo: "send", texto: msg, hora: horaAgora() }
-    setMensagens((prev) => [...prev, enviada])
-    scrollFim()
+    const sent: MsgTexto = { id: nextId.current++, tipo: "send", texto: msg, hora: horaAgora() }
+    setMessages((prev) => [...prev, sent])
+    scrollToEnd()
 
-    setDigitando(true)
-    scrollFim()
+    setIsTyping(true)
+    scrollToEnd()
 
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 800))
 
-    const resposta: MsgTexto = {
-      id: proximoId.current++,
+    const reply: MsgTexto = {
+      id: nextId.current++,
       tipo: "recv",
-      texto: gerarResposta(msg, primeiroNome),
+      texto: gerarResposta(msg, firstName),
       hora: horaAgora(),
     }
-    setMensagens((prev) => [...prev, resposta])
-    setDigitando(false)
-    scrollFim()
+    setMessages((prev) => [...prev, reply])
+    setIsTyping(false)
+    scrollToEnd()
   }
 
-  function enviarSugestao(s: string) {
-    setTexto("")
-    void enviar(s)
+  function sendSuggestion(suggestion: string) {
+    setInputText("")
+    void send(suggestion)
   }
 
   return (
@@ -112,7 +112,7 @@ export default function AssistenteScreen() {
             <View>
               <Text className="text-textoPrimario text-[16px] font-bold">AgroVista</Text>
               <Text className="text-[12px]" style={{ color: colors.verde }}>
-                {digitando ? "digitando..." : "Assistente agrícola · online"}
+                {isTyping ? "digitando..." : "Assistente agrícola · online"}
               </Text>
             </View>
           </View>
@@ -145,7 +145,7 @@ export default function AssistenteScreen() {
             </View>
           </View>
 
-          {mensagens.map((msg) => {
+          {messages.map((msg) => {
             if (msg.tipo === "arquivo") {
               return (
                 <View key={msg.id} className="mb-3">
@@ -195,33 +195,33 @@ export default function AssistenteScreen() {
               )
             }
 
-            const enviada = msg.tipo === "send"
+            const isSent = msg.tipo === "send"
             return (
               <View
                 key={msg.id}
-                className={`mb-[6px] ${enviada ? "items-end" : "items-start"}`}
+                className={`mb-[6px] ${isSent ? "items-end" : "items-start"}`}
               >
                 <View
                   className="rounded-2xl px-[14px] py-[9px]"
                   style={{
                     maxWidth: "82%",
-                    backgroundColor: enviada ? colors.whatsapp : colors.cardElevado,
+                    backgroundColor: isSent ? colors.whatsapp : colors.cardElevado,
                   }}
                 >
                   <Text
                     className="text-[14px] leading-[20px]"
-                    style={{ color: enviada ? "#ffffff" : colors.textoPrimario }}
+                    style={{ color: isSent ? "#ffffff" : colors.textoPrimario }}
                   >
                     {msg.texto}
                   </Text>
                   <View className="flex-row items-center justify-end gap-[3px] mt-[3px]">
                     <Text
                       className="text-[11px]"
-                      style={{ color: enviada ? "rgba(255,255,255,0.55)" : colors.textoTerciario }}
+                      style={{ color: isSent ? "rgba(255,255,255,0.55)" : colors.textoTerciario }}
                     >
                       {msg.hora}
                     </Text>
-                    {enviada && (
+                    {isSent && (
                       <Ionicons name="checkmark-done" size={13} color="rgba(255,255,255,0.55)" />
                     )}
                   </View>
@@ -231,7 +231,7 @@ export default function AssistenteScreen() {
           })}
 
           {/* Indicador de digitação */}
-          {digitando && (
+          {isTyping && (
             <View className="items-start mb-[6px]">
               <View
                 className="rounded-2xl px-[14px] py-[12px] flex-row items-center gap-[5px]"
@@ -267,7 +267,7 @@ export default function AssistenteScreen() {
               <TouchableOpacity
                 key={s}
                 activeOpacity={0.7}
-                onPress={() => enviarSugestao(s)}
+                onPress={() => sendSuggestion(s)}
                 className="rounded-full border border-bordaVisivel px-4 py-[7px]"
                 style={{ backgroundColor: colors.cardElevado }}
               >
@@ -299,14 +299,14 @@ export default function AssistenteScreen() {
                 style={{ paddingVertical: 10 }}
                 placeholder="Mensagem"
                 placeholderTextColor={colors.textoTerciario}
-                value={texto}
-                onChangeText={setTexto}
-                onSubmitEditing={() => void enviar()}
+                value={inputText}
+                onChangeText={setInputText}
+                onSubmitEditing={() => void send()}
                 submitBehavior="submit"
                 multiline
                 maxLength={500}
               />
-              {!texto && (
+              {!inputText && (
                 <View style={{ paddingBottom: 11 }}>
                   <Ionicons name="mic-outline" size={20} color={colors.textoTerciario} />
                 </View>
@@ -315,11 +315,11 @@ export default function AssistenteScreen() {
 
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => void enviar()}
+              onPress={() => void send()}
               className="w-[38px] h-[38px] rounded-full items-center justify-center"
               style={{
-                backgroundColor: texto ? colors.verde : colors.cardElevado,
-                borderWidth: texto ? 0 : 1,
+                backgroundColor: inputText ? colors.verde : colors.cardElevado,
+                borderWidth: inputText ? 0 : 1,
                 borderColor: colors.bordaVisivel,
                 marginBottom: 1,
               }}
@@ -327,7 +327,7 @@ export default function AssistenteScreen() {
               <Ionicons
                 name="send-outline"
                 size={16}
-                color={texto ? colors.bg : colors.textoTerciario}
+                color={inputText ? colors.bg : colors.textoTerciario}
               />
             </TouchableOpacity>
           </View>

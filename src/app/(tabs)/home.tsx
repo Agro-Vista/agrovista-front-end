@@ -15,39 +15,39 @@ import { PageHeader } from "@/components/PageHeader"
 import type { AlertItemData } from "@/types/alert"
 import type { EventoPendente } from "@/types/history"
 import { WeatherAlertCard } from "@/components/WeatherAlertCard"
-import { ValidacaoModal } from "@/components/ValidacaoModal"
+import { ModalValidation } from "@/components/ModalValidation"
 import { getWeatherAlerts } from "@/services/weatherAlertsService"
 import { useSession } from "@/context/SessionContext"
-import { useHistorico } from "@/context/HistoricoContext"
+import { useHistory } from "@/context/HistoricoContext"
 
 export default function HomeScreen() {
   const { session } = useSession()
-  const { pendentes, validar } = useHistorico()
-  const [eventoParaValidar, setEventoParaValidar] = useState<EventoPendente | null>(null)
-  const [abaAtiva, setAbaAtiva] = useState<Aba>("Mapa")
-  const [avisosAPI, setAvisosAPI] = useState<AlertItemData[]>([])
-  const [loadingAvisos, setLoadingAvisos] = useState(false)
-  const [erroAvisos, setErroAvisos] = useState(false)
+  const { pending, validate } = useHistory()
+  const [eventToValidate, setEventToValidate] = useState<EventoPendente | null>(null)
+  const [activeTab, setActiveTab] = useState<Aba>("Mapa")
+  const [apiAlerts, setApiAlerts] = useState<AlertItemData[]>([])
+  const [loadingAlerts, setLoadingAlerts] = useState(false)
+  const [alertsError, setAlertsError] = useState(false)
 
-  const handleValidar = (id: number, resultado: Parameters<typeof validar>[1]) => {
-    validar(id, resultado)
-    const proximo = pendentes.find((p) => p.id !== id)
-    setEventoParaValidar(proximo ?? null)
+  const handleValidate = (id: number, result: Parameters<typeof validate>[1]) => {
+    validate(id, result)
+    const next = pending.find((p) => p.id !== id)
+    setEventToValidate(next ?? null)
   }
 
   useEffect(() => {
-    void fetchAvisos()
+    void fetchAlerts()
   }, [])
 
-  const fetchAvisos = async () => {
-    setLoadingAvisos(true)
+  const fetchAlerts = async () => {
+    setLoadingAlerts(true)
     try {
       const data = await getWeatherAlerts()
-      setAvisosAPI(data)
+      setApiAlerts(data)
     } catch {
-      setErroAvisos(true)
+      setAlertsError(true)
     } finally {
-      setLoadingAvisos(false)
+      setLoadingAlerts(false)
     }
   }
 
@@ -67,22 +67,22 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 10, alignItems: "center" }}
         >
-          {ABAS.map((aba) => {
-            const ativa = abaAtiva === aba
+          {ABAS.map((tab) => {
+            const isActive = activeTab === tab
             return (
               <TouchableOpacity
-                key={aba}
-                onPress={() => setAbaAtiva(aba)}
+                key={tab}
+                onPress={() => setActiveTab(tab)}
                 className={`px-[18px] py-[7px] rounded-full border ${
-                  ativa ? "bg-verde border-verde" : "bg-card border-bordaVisivel"
+                  isActive ? "bg-verde border-verde" : "bg-card border-bordaVisivel"
                 }`}
               >
                 <Text
                   className={`text-[13px] font-medium ${
-                    ativa ? "text-[#111111]" : "text-textoSecundario"
+                    isActive ? "text-[#111111]" : "text-textoSecundario"
                   }`}
                 >
-                  {aba}
+                  {tab}
                 </Text>
               </TouchableOpacity>
             )
@@ -97,7 +97,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 28 }}
       >
         {/* ABA: MAPA */}
-        {abaAtiva === "Mapa" && (
+        {activeTab === "Mapa" && (
           <>
             <View
               className="mx-4 rounded-2xl overflow-hidden h-[180px] border"
@@ -187,11 +187,11 @@ export default function HomeScreen() {
             </View>
 
             {/* Pendentes para validar */}
-            {pendentes.length > 0 && (
+            {pending.length > 0 && (
               <TouchableOpacity
                 className="mx-4 mt-3 rounded-2xl border flex-row items-center gap-3 p-4"
                 style={{ backgroundColor: colors.ambarBackground, borderColor: colors.ambar + "50" }}
-                onPress={() => setEventoParaValidar(pendentes[0])}
+                onPress={() => setEventToValidate(pending[0])}
                 activeOpacity={0.7}
               >
                 <View
@@ -202,9 +202,9 @@ export default function HomeScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-[13px] font-semibold text-textoPrimario">
-                    {pendentes.length === 1
+                    {pending.length === 1
                       ? "1 alerta aguarda sua validação"
-                      : `${pendentes.length} alertas aguardam validação`}
+                      : `${pending.length} alertas aguardam validação`}
                   </Text>
                   <Text className="text-[11px] text-textoSecundario mt-[2px]">
                     Seu feedback melhora a precisão da IA
@@ -220,7 +220,7 @@ export default function HomeScreen() {
                 <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario">
                   ALERTAS RECENTES
                 </Text>
-                {avisosAPI.length > 0 && (
+                {apiAlerts.length > 0 && (
                   <View className="flex-row items-center gap-1">
                     <View className="w-[6px] h-[6px] rounded-full bg-verde" />
                     <Text className="text-[10px] text-verde">INMET · ao vivo</Text>
@@ -228,23 +228,23 @@ export default function HomeScreen() {
                 )}
               </View>
 
-              {loadingAvisos ? (
+              {loadingAlerts ? (
                 <ActivityIndicator color={colors.verde} className="my-6" />
-              ) : erroAvisos || avisosAPI.length === 0 ? (
+              ) : alertsError || apiAlerts.length === 0 ? (
                 <View className="items-center py-8 gap-[10px]">
                   <Ionicons name="cloud-offline-outline" size={36} color={colors.textoTerciario} />
                   <Text className="text-[14px] text-textoSecundario font-semibold">
-                    {erroAvisos ? "Sem conexão com a INMET" : "Nenhum alerta ativo"}
+                    {alertsError ? "Sem conexão com a INMET" : "Nenhum alerta ativo"}
                   </Text>
                   <Text className="text-[12px] text-textoTerciario text-center">
-                    {erroAvisos
+                    {alertsError
                       ? "Verifique sua conexão e tente novamente."
                       : "Todas as regiões monitoradas estão sem alertas no momento."}
                   </Text>
                 </View>
               ) : (
-                avisosAPI.map((alerta, idx) => (
-                  <WeatherAlertCard key={idx} aviso={alerta} />
+                apiAlerts.map((item, idx) => (
+                  <WeatherAlertCard key={idx} alert={item} />
                 ))
               )}
             </View>
@@ -252,12 +252,12 @@ export default function HomeScreen() {
         )}
 
         {/* ABA: ALERTAS */}
-        {abaAtiva === "Alertas" && (
+        {activeTab === "Alertas" && (
           <View className="mx-4 mt-1">
             <Text className="text-[11px] font-bold tracking-[1.2px] text-textoTerciario mb-3">
               TODOS OS ALERTAS ATIVOS
             </Text>
-            {avisosAPI.length === 0 ? (
+            {apiAlerts.length === 0 ? (
               <View className="items-center py-8 gap-[10px]">
                 <Ionicons name="checkmark-circle-outline" size={36} color={colors.textoTerciario} />
                 <Text className="text-[14px] text-textoSecundario font-semibold">
@@ -268,15 +268,15 @@ export default function HomeScreen() {
                 </Text>
               </View>
             ) : (
-              avisosAPI.map((alerta, idx) => (
-                <WeatherAlertCard key={idx} aviso={alerta} />
+              apiAlerts.map((item, idx) => (
+                <WeatherAlertCard key={idx} alert={item} />
               ))
             )}
           </View>
         )}
 
         {/* ABA: REGIÕES */}
-        {abaAtiva === "Regiões" && (
+        {activeTab === "Regiões" && (
           <View className="mx-4 mt-10 items-center gap-3">
             <View className="w-16 h-16 rounded-[20px] bg-card border border-bordaSutil items-center justify-center">
               <Ionicons name="map-outline" size={28} color={colors.textoTerciario} />
@@ -297,7 +297,7 @@ export default function HomeScreen() {
         )}
 
         {/* ABA: IA */}
-        {abaAtiva === "IA" && (
+        {activeTab === "IA" && (
           <View className="mx-4 mt-10 items-center gap-3">
             <View
               className="w-16 h-16 rounded-[20px] bg-verdeBackground border items-center justify-center"
@@ -321,10 +321,10 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      <ValidacaoModal
-        evento={eventoParaValidar}
-        onValidar={handleValidar}
-        onClose={() => setEventoParaValidar(null)}
+      <ModalValidation
+        event={eventToValidate}
+        onValidate={handleValidate}
+        onClose={() => setEventToValidate(null)}
       />
     </View>
   )
